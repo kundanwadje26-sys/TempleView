@@ -1,1 +1,1324 @@
-hu
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#1c120b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Tirumala Sri Venkateswara Temple — walk through in 3D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Yatra+One&family=Hind:wght@400;500;600&family=Noto+Serif+Telugu:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --kumkum:#8E1B2B;
+  --turmeric:#E3A21A;
+  --camphor:#FBF6EA;
+  --granite:#1c140e;
+  --sandal:#D8B07A;
+  --panel:rgba(30,20,12,.9);
+  --line:rgba(227,162,26,.35);
+  --display:"Yatra One","Hind",Georgia,serif;
+  --body:"Hind","Segoe UI",Roboto,Arial,sans-serif;
+  --telugu:"Noto Serif Telugu","Gautami","Nirmala UI",serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:#000;color:var(--camphor);font-family:var(--body);
+  overscroll-behavior:none;touch-action:none;user-select:none;-webkit-user-select:none}
+#stage,#stage canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
+#touch{position:fixed;inset:0;z-index:2;touch-action:none}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,summary:focus-visible,input:focus-visible{outline:2px solid var(--turmeric);outline-offset:2px}
+
+/* ---------- start screen ---------- */
+#intro{position:fixed;inset:0;z-index:20;display:flex;overflow-y:auto;touch-action:pan-y;padding:24px;
+  background:radial-gradient(ellipse at 50% 30%,#4a2a10 0%,#1c120b 60%,#0b0705 100%);}
+#intro .wrap{max-width:30rem;text-align:center;margin:auto}
+#intro .te{font-family:var(--telugu);font-weight:700;font-size:clamp(26px,7vw,40px);color:var(--turmeric);line-height:1.5}
+#intro h1{font-family:var(--display);font-weight:400;font-size:clamp(30px,8.5vw,52px);line-height:1.05;margin:.3em 0 .4em;color:var(--camphor)}
+#intro p{color:#e9d9bd;line-height:1.6;font-size:16px;margin:0 0 1.1em}
+#intro .how{font-size:14px;color:#cdb795;line-height:1.55}
+#enter{margin-top:1.2em;background:var(--kumkum);border:1px solid var(--turmeric);padding:.85em 2.2em;border-radius:999px;
+  font-family:var(--display);font-size:20px;letter-spacing:.02em;box-shadow:0 0 0 6px rgba(142,27,43,.25)}
+#enter[disabled]{opacity:.6}
+#namam{width:46px;height:58px;margin:0 auto .6em;display:block}
+
+/* ---------- HUD ---------- */
+.hud{position:fixed;z-index:5;pointer-events:none}
+#where{top:calc(env(safe-area-inset-top,0px) + 10px);left:10px;max-width:60vw;background:var(--panel);border:1px solid var(--line);
+  border-radius:4px 14px 14px 4px;padding:6px 12px 6px 10px;border-left:4px solid var(--kumkum)}
+#where .n{font-family:var(--display);font-size:16px;line-height:1.2}
+#where .t{font-size:12px;color:var(--sandal)}
+#tools{top:calc(env(safe-area-inset-top,0px) + 10px);right:10px;display:flex;flex-direction:column;gap:8px;pointer-events:auto}
+#tools button{width:46px;height:46px;border-radius:50%;background:var(--panel);border:1px solid var(--line);display:grid;place-items:center}
+#tools button svg{width:22px;height:22px;stroke:var(--turmeric);fill:none;stroke-width:1.8}
+#tools button[aria-pressed="true"]{background:var(--kumkum)}
+#chip{left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 24px);pointer-events:auto;display:none}
+#chip button{background:var(--kumkum);border:1px solid var(--turmeric);border-radius:999px;padding:.6em 1.2em;font-size:15px;
+  box-shadow:0 4px 18px rgba(0,0,0,.45);max-width:80vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#cross{left:50%;top:50%;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;background:rgba(251,246,234,.55)}
+#joy{width:120px;height:120px;border-radius:50%;border:2px solid rgba(227,162,26,.45);background:rgba(28,20,14,.25);display:none}
+#joy i{position:absolute;left:50%;top:50%;width:52px;height:52px;margin:-26px 0 0 -26px;border-radius:50%;background:rgba(227,162,26,.6)}
+#hint{left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 90px);font-size:13px;color:#f3e6cf;
+  background:rgba(28,20,14,.7);padding:6px 12px;border-radius:8px;text-align:center;transition:opacity 1s}
+#mini{position:fixed;z-index:5;left:10px;bottom:calc(env(safe-area-inset-bottom,0px) + 10px);border-radius:10px;border:1px solid var(--line);
+  background:rgba(20,14,9,.8);display:none}
+#fps{position:fixed;z-index:5;right:64px;top:calc(env(safe-area-inset-top,0px) + 14px);font-size:11px;color:#a89070;pointer-events:none}
+
+/* ---------- sheet ---------- */
+#sheet{position:fixed;z-index:10;left:0;right:0;bottom:0;max-height:78vh;background:#1f150d;border-top:2px solid var(--turmeric);
+  border-radius:18px 18px 0 0;transform:translateY(105%);transition:transform .32s cubic-bezier(.2,.8,.2,1);display:flex;flex-direction:column;
+  padding-bottom:env(safe-area-inset-bottom,0px);touch-action:pan-y;user-select:text;-webkit-user-select:text}
+#sheet.open{transform:none}
+#sheet header{display:flex;align-items:center;gap:10px;padding:14px 16px 8px}
+#sheet h2{font-family:var(--display);font-weight:400;font-size:24px;margin:0;flex:1;line-height:1.15;color:var(--camphor)}
+#sheet .close{width:40px;height:40px;border-radius:50%;background:#2e2014;border:1px solid var(--line);font-size:20px}
+#sheet .body{overflow-y:auto;padding:4px 18px 22px;font-size:16px;line-height:1.65;color:#eadcc4;-webkit-overflow-scrolling:touch;max-width:44rem}
+#sheet .body p{margin:.2em 0 .9em}
+#sheet .body b{color:var(--camphor)}
+#sheet .body .te{font-family:var(--telugu);color:var(--turmeric)}
+#sheet .body .note{font-size:13.5px;color:#b9a382;border-left:3px solid var(--kumkum);padding-left:10px}
+#sheet details{border-bottom:1px solid rgba(227,162,26,.18);padding:6px 0}
+#sheet summary{font-family:var(--display);font-size:19px;color:var(--turmeric);padding:6px 0;cursor:pointer;list-style:none}
+#sheet summary::-webkit-details-marker{display:none}
+#sheet summary::before{content:"+";display:inline-block;width:1.2em;color:var(--sandal)}
+#sheet details[open] summary::before{content:"−"}
+.places{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:6px}
+.places button{text-align:left;background:#2b1d12;border:1px solid var(--line);border-radius:10px;padding:10px;font-size:14px;line-height:1.3}
+.places button small{display:block;color:var(--sandal);font-size:12px;margin-top:2px}
+.seg{display:flex;gap:6px;margin:8px 0 12px}
+.seg button{flex:1;background:#2b1d12;border:1px solid var(--line);border-radius:8px;padding:9px 6px;font-size:14px}
+.seg button[aria-pressed="true"]{background:var(--kumkum);border-color:var(--turmeric)}
+input[type=range]{width:100%;accent-color:var(--turmeric);height:30px}
+.clock{font-family:var(--display);font-size:38px;color:var(--camphor);line-height:1}
+.seva{background:#2b1d12;border-radius:10px;padding:10px 12px;margin:10px 0;border-left:4px solid var(--turmeric)}
+.sched{width:100%;border-collapse:collapse;font-size:14px}
+.sched td{padding:5px 4px;border-bottom:1px solid rgba(227,162,26,.12);vertical-align:top}
+.sched td:first-child{white-space:nowrap;color:var(--sandal);width:7.5em}
+.sched tr.now td{color:var(--turmeric);font-weight:600}
+@media (prefers-reduced-motion:reduce){#sheet{transition:none}}
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<div id="touch"></div>
+
+<div id="intro" role="dialog" aria-label="Welcome">
+  <div class="wrap">
+    <svg id="namam" viewBox="0 0 46 58" aria-hidden="true"><path d="M6 4 L14 4 L19 40 Q23 47 27 40 L32 4 L40 4 L32 46 Q23 58 14 46 Z" fill="#FBF6EA"/><rect x="21" y="6" width="4" height="40" rx="2" fill="#C8102E"/></svg>
+    <div class="te">ఓం నమో వేంకటేశాయ</div>
+    <h1>Walk through Tirumala</h1>
+    <p>Sri Venkateswara Swamy temple on Venkatadri, rebuilt in 3D. Walk from the Mada streets through the Mahadwaram, around Ananda Nilayam, past the Bangaru Vakili, and stand before the Moolavirat in the sanctum.</p>
+    <p class="how" id="howto"></p>
+    <button id="enter" disabled>Preparing the temple…</button>
+  </div>
+</div>
+
+<div class="hud" id="where"><div class="n">Mada Streets</div><div class="t">Tirumala</div></div>
+<div class="hud" id="cross"></div>
+<div class="hud" id="hint">Drag to look around. Walk with the joystick.</div>
+<div class="hud" id="chip"><button id="chipBtn">About</button></div>
+<div class="hud" id="joy"><i></i></div>
+<canvas id="mini" width="170" height="200" aria-label="Map"></canvas>
+<div id="fps"></div>
+
+<div class="hud" id="tools">
+  <button id="bGo" aria-label="Go to a place"><svg viewBox="0 0 24 24"><path d="M12 22s7-7 7-12a7 7 0 1 0-14 0c0 5 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg></button>
+  <button id="bTime" aria-label="Time of day"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg></button>
+  <button id="bBook" aria-label="Temple guide"><svg viewBox="0 0 24 24"><path d="M4 4h6a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H4zM20 4h-6a2 2 0 0 0-2 2v14a2 2 0 0 1 2-2h6z"/></svg></button>
+  <button id="bMap" aria-label="Show map" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15M15 6v15"/></svg></button>
+  <button id="bBell" aria-label="Ring the temple bell"><svg viewBox="0 0 24 24"><path d="M6 17h12l-1.5-2V10a4.5 4.5 0 0 0-9 0v5z"/><path d="M10 20a2 2 0 0 0 4 0M12 3v2"/></svg></button>
+  <button id="bSet" aria-label="Settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+</div>
+
+<section id="sheet" aria-live="polite">
+  <header><h2 id="sTitle">Title</h2><button class="close" id="sClose" aria-label="Close">×</button></header>
+  <div class="body" id="sBody"></div>
+</section>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+"use strict";
+/* =====================================================================
+   Tirumala Sri Venkateswara Temple — first-person 3D walkthrough
+   Orientation: +z = EAST (the Lord faces east), +x = NORTH, units = metres
+   ===================================================================== */
+const isTouch = matchMedia('(pointer:coarse)').matches || 'ontouchstart' in window;
+const $ = s => document.querySelector(s);
+$('#howto').textContent = isTouch
+  ? 'Left thumb: walk (push further to run). Right thumb: drag to look. Tap the gold button that appears near a sacred spot to read about it.'
+  : 'W A S D or arrow keys to walk, Shift to run, drag the mouse to look. Press E (or click the gold button) near a sacred spot to read about it.';
+
+/* ---------------- renderer / scene ---------------- */
+let quality = isTouch ? 'balanced' : 'high';
+const renderer = new THREE.WebGLRenderer({antialias:true, powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(devicePixelRatio, isTouch ? 1.5 : 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+$('#stage').appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.Fog(0xbcd8f0, 70, 720);
+const camera = new THREE.PerspectiveCamera(72, innerWidth/innerHeight, 0.05, 2000);
+camera.rotation.order = 'YXZ';
+const world = new THREE.Group(); scene.add(world);   // static, merged later
+const dyn = new THREE.Group(); scene.add(dyn);       // animated things
+
+/* ---------------- procedural textures ---------------- */
+function canvasTex(size, draw, rep){
+  const c = document.createElement('canvas'); c.width = c.height = size;
+  const g = c.getContext('2d'); draw(g, size);
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.encoding = THREE.sRGBEncoding;
+  t.anisotropy = renderer.capabilities.getMaxAnisotropy ? Math.min(8, renderer.capabilities.getMaxAnisotropy()) : 4;
+  if (rep) t.repeat.set(rep, rep);
+  return t;
+}
+function speckle(g, s, base, cols, n, maxR=1.8){
+  g.fillStyle = base; g.fillRect(0,0,s,s);
+  for (let i=0;i<n;i++){ g.globalAlpha = .15 + Math.random()*.5; g.fillStyle = cols[i%cols.length];
+    const r = .4 + Math.random()*maxR; g.fillRect(Math.random()*s, Math.random()*s, r, r); }
+  g.globalAlpha = 1;
+}
+const texGranite = canvasTex(256, (g,s)=>{ speckle(g,s,'#8d837a',['#3d3631','#b9b0a5','#5c534c','#d6cfc4'],9000);
+  g.globalAlpha=.08; for(let i=0;i<6;i++){g.fillStyle=i%2?'#000':'#fff';g.fillRect(0,Math.random()*s,s,Math.random()*30);} g.globalAlpha=1; });
+const texDark = canvasTex(256, (g,s)=>{ speckle(g,s,'#4a423b',['#211c18','#6e655c','#2e2823'],9000); });
+const texFloor = canvasTex(512, (g,s)=>{ const n=4, w=s/n;
+  for(let i=0;i<n;i++)for(let j=0;j<n;j++){ const v=120+Math.random()*30|0; g.fillStyle=`rgb(${v+18},${v+10},${v})`; g.fillRect(i*w,j*w,w,w); }
+  speckle(g,0,'rgba(0,0,0,0)',[],0);
+  for(let k=0;k<14000;k++){ g.globalAlpha=.12+Math.random()*.25; g.fillStyle=Math.random()<.5?'#2f2924':'#d8cfc2'; g.fillRect(Math.random()*s,Math.random()*s,1.4,1.4); }
+  g.globalAlpha=1; g.strokeStyle='#3a322b'; g.lineWidth=3; for(let i=0;i<=n;i++){ g.beginPath(); g.moveTo(i*w,0); g.lineTo(i*w,s); g.stroke(); g.beginPath(); g.moveTo(0,i*w); g.lineTo(s,i*w); g.stroke(); } });
+const texPlaster = canvasTex(256, (g,s)=>{ speckle(g,s,'#efe4cf',['#d8c8ab','#fff8ea','#cbb995'],5000,2.5); });
+const texGold = canvasTex(256, (g,s)=>{ const gr=g.createLinearGradient(0,0,s,s); gr.addColorStop(0,'#f6cd5a'); gr.addColorStop(.5,'#d9a531'); gr.addColorStop(1,'#f3c64f');
+  g.fillStyle=gr; g.fillRect(0,0,s,s); g.globalAlpha=.25; for(let i=0;i<60;i++){ g.fillStyle=i%2?'#8a5c10':'#fff1b0'; g.fillRect(0,Math.random()*s,s,1+Math.random()*2);} g.globalAlpha=1; });
+const texGround = canvasTex(256, (g,s)=>{ speckle(g,s,'#6b6a45',['#4d5a2e','#857a4f','#3f4a25','#9a8a5b'],12000,2.2); });
+const texWater = canvasTex(256, (g,s)=>{ g.fillStyle='#284f55'; g.fillRect(0,0,s,s); g.globalAlpha=.25;
+  for(let i=0;i<300;i++){ g.strokeStyle=i%2?'#7fb2b0':'#163538'; g.beginPath(); const x=Math.random()*s,y=Math.random()*s; g.moveTo(x,y); g.quadraticCurveTo(x+10,y-3,x+22,y); g.stroke(); } g.globalAlpha=1; });
+const glowTex = canvasTex(128, (g,s)=>{ const r=g.createRadialGradient(s/2,s/2,0,s/2,s/2,s/2); r.addColorStop(0,'rgba(255,240,200,1)'); r.addColorStop(.25,'rgba(255,180,80,.55)'); r.addColorStop(1,'rgba(255,120,20,0)'); g.fillStyle=r; g.fillRect(0,0,s,s); });
+glowTex.wrapS = glowTex.wrapT = THREE.ClampToEdgeWrapping;
+
+/* environment map for metals (gold vimana, silver doors) */
+const pmrem = new THREE.PMREMGenerator(renderer);
+const envGrad = canvasTex(64,(g,s)=>{ const gr=g.createLinearGradient(0,0,0,s); gr.addColorStop(0,'#fff6dc'); gr.addColorStop(.45,'#c9b48a'); gr.addColorStop(.55,'#6b5534'); gr.addColorStop(1,'#2a1d10'); g.fillStyle=gr; g.fillRect(0,0,s,s); });
+const envScene = new THREE.Scene();
+envScene.add(new THREE.Mesh(new THREE.SphereGeometry(10,32,16), new THREE.MeshBasicMaterial({map:envGrad, side:THREE.BackSide})));
+const envMap = pmrem.fromScene(envScene, 0.04).texture;
+
+/* ---------------- materials ---------------- */
+const std = o => new THREE.MeshStandardMaterial(o);
+const M = {
+  granite: std({map:texGranite, roughness:.88}),
+  dark: std({map:texDark, roughness:.8}),
+  soot: std({map:texDark, color:0x5a524a, roughness:.9}),
+  floor: std({map:texFloor, roughness:.72}),
+  plaster: std({map:texPlaster, roughness:.9, emissive:0xffc070, emissiveIntensity:0}),
+  gold: std({map:texGold, color:0xffd27a, metalness:.85, roughness:.3, envMap, envMapIntensity:1, emissive:0xff9a20, emissiveIntensity:0}),
+  goldSmall: std({map:texGold, color:0xffd27a, metalness:.8, roughness:.28, envMap, envMapIntensity:1.1}),
+  silver: std({color:0xe2e5ea, metalness:.85, roughness:.25, envMap, envMapIntensity:1}),
+  brass: std({color:0xc89a3a, metalness:.75, roughness:.35, envMap, envMapIntensity:.9}),
+  copper: std({color:0x8f5a3a, metalness:.6, roughness:.45, envMap, envMapIntensity:.7}),
+  idol: std({color:0x15110e, roughness:.32, metalness:.15, envMap, envMapIntensity:.5}),
+  silk: std({color:0xe0a81c, roughness:.55, metalness:.1}),
+  silkRed: std({color:0x9b1626, roughness:.6}),
+  namam: std({color:0xfbf8ef, roughness:.7, emissive:0xffffff, emissiveIntensity:.05}),
+  kumkum: std({color:0xc8102e, roughness:.6}),
+  tulsi: std({color:0x3c6a2a, roughness:.85}),
+  marigold: std({color:0xf28a10, roughness:.8}),
+  jasmine: std({color:0xf8f3e3, roughness:.8}),
+  rose: std({color:0xb0172c, roughness:.8}),
+  gem: std({color:0xc4102a, roughness:.15, metalness:.2, emissive:0x400008}),
+  emerald: std({color:0x0f7a43, roughness:.15, metalness:.2, emissive:0x02200f}),
+  water: std({map:texWater, color:0x7aa7a3, roughness:.08, metalness:.35, envMap, envMapIntensity:.8, transparent:true, opacity:.92}),
+  ground: std({map:texGround, roughness:1}),
+  hill: std({color:0x56603a, roughness:1, flatShading:true}),
+  leaf: std({color:0x2f4a22, roughness:1, flatShading:true}),
+  bark: std({color:0x4a3624, roughness:1}),
+  wood: std({color:0x5a3a22, roughness:.8}),
+  cloth: std({color:0xf4efe2, roughness:.95}),
+  saffron: std({color:0xe2701c, roughness:.9}),
+  paint: std({color:0xb0302a, roughness:.85}),
+  lampHead: new THREE.MeshBasicMaterial({color:0xffe2a8}),
+};
+M.goldMats = [M.gold, M.goldSmall, M.silver, M.brass, M.copper, M.water, M.idol];
+texGranite.repeat.set(1,1);
+
+/* ---------------- geometry helpers ---------------- */
+function boxGeo(w,h,d,s=2.2){
+  const g = new THREE.BoxGeometry(w,h,d); const uv = g.attributes.uv;
+  const dims = [[d,h],[d,h],[w,d],[w,d],[w,h],[w,h]];
+  for (let f=0;f<6;f++) for (let i=0;i<4;i++){ const k=f*4+i; uv.setXY(k, uv.getX(k)*dims[f][0]/s, uv.getY(k)*dims[f][1]/s); }
+  return g;
+}
+function mk(geo, mat, x=0, y=0, z=0, parent=world){
+  const m = new THREE.Mesh(geo, mat); m.position.set(x,y,z); m.castShadow = true; m.receiveShadow = true; parent.add(m); return m;
+}
+const colliders = [], circles = [];
+function addBox(mat, w, h, d, x, y, z, opt={}){
+  const m = mk(boxGeo(w,h,d,opt.uv||2.2), mat, x, y+h/2, z, opt.parent||world);
+  if (opt.collide !== false && y < 1.9) colliders.push({x1:x-w/2, x2:x+w/2, z1:z-d/2, z2:z+d/2});
+  return m;
+}
+function wallX(x1, x2, z, h, t, mat, doors=[]){ // wall running along X at given z
+  let cur = x1; doors.sort((a,b)=>a[0]-b[0]);
+  for (const [cx,w,dh] of doors){ const a=cx-w/2, b=cx+w/2;
+    if (a>cur) addBox(mat, a-cur, h, t, (cur+a)/2, 0, z);
+    if (h-dh>.01) addBox(mat, b-a, h-dh, t, cx, dh, z, {collide:false}); cur = b; }
+  if (x2>cur) addBox(mat, x2-cur, h, t, (cur+x2)/2, 0, z);
+}
+function wallZ(z1, z2, x, h, t, mat, doors=[]){ // wall running along Z at given x
+  let cur = z1; doors.sort((a,b)=>a[0]-b[0]);
+  for (const [cz,w,dh] of doors){ const a=cz-w/2, b=cz+w/2;
+    if (a>cur) addBox(mat, t, h, a-cur, x, 0, (cur+a)/2);
+    if (h-dh>.01) addBox(mat, t, h-dh, b-a, x, dh, cz, {collide:false}); cur = b; }
+  if (z2>cur) addBox(mat, t, h, z2-cur, x, 0, (cur+z2)/2);
+}
+function lathe(points, seg=24){ return new THREE.LatheGeometry(points.map(p=>new THREE.Vector2(p[0],p[1])), seg); }
+function limb(parent, a, b, r, mat){
+  const len = a.distanceTo(b);
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(r*.85, r, len, 12), mat);
+  m.position.copy(a).add(b).multiplyScalar(.5);
+  m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), b.clone().sub(a).normalize());
+  m.castShadow = true; parent.add(m); return m;
+}
+const V = (x,y,z)=>new THREE.Vector3(x,y,z);
+
+/* ---------------- pillars (instanced) ---------------- */
+const pillarList = [];
+function pillar(x, z, h, y0=0, r=.32){ pillarList.push({x,z,h,y0,r}); if (y0<1) circles.push({x,z,r:r+.05}); }
+function buildPillars(){
+  const shaft = lathe([[.0,0],[.30,0],[.30,.06],[.24,.1],[.24,.22],[.30,.26],[.30,.36],[.22,.42],[.20,.6],[.24,.64],[.24,.7],[.19,.76],[.19,.9],[.26,.95],[.3,1]], 8);
+  const n = pillarList.length;
+  const im = new THREE.InstancedMesh(shaft, M.granite, n);
+  const ib = new THREE.InstancedMesh(boxGeo(.78,.5,.78,1), M.granite, n*2);
+  const mtx = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3();
+  pillarList.forEach((P,i)=>{
+    const sh = P.h - .9, k = P.r/.32;
+    q.setFromAxisAngle(V(0,1,0), Math.PI/8);
+    mtx.compose(p.set(P.x, P.y0+.5, P.z), q, s.set(k, sh, k)); im.setMatrixAt(i, mtx);
+    mtx.compose(p.set(P.x, P.y0+.25, P.z), new THREE.Quaternion(), s.set(k,1,k)); ib.setMatrixAt(i*2, mtx);
+    mtx.compose(p.set(P.x, P.y0+P.h-.2, P.z), new THREE.Quaternion(), s.set(k*1.25,.8,k*1.25)); ib.setMatrixAt(i*2+1, mtx);
+  });
+  [im, ib].forEach(o=>{ o.castShadow = true; o.receiveShadow = true; o.instanceMatrix.needsUpdate = true; scene.add(o); });
+}
+function mandapam(x1, z1, x2, z2, h, step=3, opt={}){
+  const nx = Math.max(1, Math.round((x2-x1-1.2)/step)), nz = Math.max(1, Math.round((z2-z1-1.2)/step));
+  for (let i=0;i<=nx;i++) for (let j=0;j<=nz;j++){
+    const x = x1+.6+i*(x2-x1-1.2)/nx, z = z1+.6+j*(z2-z1-1.2)/nz;
+    const edge = i===0||j===0||i===nx||j===nz;
+    if (opt.perimeter && !edge) continue;
+    if (opt.skip && opt.skip(x,z)) continue;
+    pillar(x, z, h, opt.y0||0);
+  }
+  const cx=(x1+x2)/2, cz=(z1+z2)/2, w=x2-x1, d=z2-z1, y=(opt.y0||0)+h;
+  if (opt.hole){ const [hx1,hz1,hx2,hz2] = opt.hole;
+    addBox(M.granite, w, .5, hz1-z1, cx, y, (z1+hz1)/2, {collide:false});
+    addBox(M.granite, w, .5, z2-hz2, cx, y, (z2+hz2)/2, {collide:false});
+    addBox(M.granite, hx1-x1, .5, hz2-hz1, (x1+hx1)/2, y, (hz1+hz2)/2, {collide:false});
+    addBox(M.granite, x2-hx2, .5, hz2-hz1, (x2+hx2)/2, y, (hz1+hz2)/2, {collide:false});
+  } else addBox(M.granite, w, .5, d, cx, y, cz, {collide:false});
+  addBox(M.granite, w+1.1, .16, d+1.1, cx, y+.5, cz, {collide:false});
+  if (!opt.noParapet){ for (const s of [-1,1]){ addBox(opt.parMat||M.plaster, w, .45, .25, cx, y+.66, cz+s*(d/2+.3), {collide:false}); addBox(opt.parMat||M.plaster, .25, .45, d, cx+s*(w/2+.3), y+.66, cz, {collide:false}); } }
+}
+
+/* ---------------- architectural pieces ---------------- */
+const kalasamGeo = lathe([[0,0],[.28,0],[.34,.12],[.3,.3],[.14,.42],[.2,.5],[.08,.62],[.1,.7],[0,.95]], 16);
+function kalasam(x,y,z,s=1,mat=M.gold){ const m = mk(kalasamGeo, mat, x,y,z); m.scale.setScalar(s); return m; }
+function kudu(x,y,z,w,h,face,mat,ry=0){ // miniature shrine niche on a tower face
+  const g = new THREE.Group(); g.position.set(x,y,z); g.rotation.y = ry; world.add(g);
+  mk(boxGeo(w,h,.35,1), mat, 0, h/2, 0, g);
+  mk(boxGeo(w*.55,h*.6,.12,1), M.dark, 0, h*.42, .2, g);
+  const dome = mk(new THREE.SphereGeometry(w*.42, 10, 6, 0, Math.PI*2, 0, Math.PI/2), mat, 0, h, 0, g); dome.scale.y = 1.1;
+  const k = mk(kalasamGeo, M.goldSmall, 0, h+w*.4, 0, g); k.scale.setScalar(.32);
+}
+function gopuram(cx, cz, w, d, baseH, tiers, th, openW, openH, mat){
+  const pw = (w-openW)/2;
+  for (const s of [-1,1]){
+    const px = cx + s*(openW/2 + pw/2);
+    addBox(M.granite, pw, baseH, d, px, 0, cz);
+    for (const yy of [.15, .9, baseH*.55]) addBox(M.granite, pw+.25, .28, d+.25, px, yy, cz, {collide:false});
+    for (const sz of [-1,1]) for (let k=0;k<2;k++) kudu(px + (k-.5)*pw*.5, 1.6, cz+sz*(d/2+.05), 1.1, 2.2, 1, M.granite, sz>0?0:Math.PI);
+  }
+  addBox(M.granite, openW, baseH-openH, d, cx, openH, cz, {collide:false});
+  addBox(M.gold, openW+.3, .25, .3, cx, openH-.25, cz+d/2+.1, {collide:false});
+  addBox(M.gold, openW+.3, .25, .3, cx, openH-.25, cz-d/2-.1, {collide:false});
+  addBox(mat, w+.9, .4, d+.9, cx, baseH, cz, {collide:false});
+  let y = baseH+.4, tw = w, td = d;
+  for (let i=0;i<tiers;i++){
+    tw *= .87; td *= .86;
+    addBox(mat, tw, th, td, cx, y, cz, {collide:false});
+    const n = Math.max(2, Math.floor(tw/2.3));
+    for (let k=0;k<n;k++){
+      const kx = cx - tw/2 + (k+.5)*tw/n, big = (k===Math.floor(n/2));
+      kudu(kx, y+.08, cz+td/2+.12, big?1.0:.75, th*.62, 1, mat, 0);
+      kudu(kx, y+.08, cz-td/2-.12, big?1.0:.75, th*.62, 1, mat, Math.PI);
+    }
+    for (const s of [-1,1]) kudu(cx+s*(tw/2+.12), y+.08, cz, .8, th*.62, 1, mat, s*Math.PI/2);
+    addBox(mat, tw+.5, .26, td+.5, cx, y+th, cz, {collide:false});
+    y += th + .26;
+  }
+  const sl = tw*.86, sr = td*.38;
+  const shala = mk(new THREE.CylinderGeometry(sr, sr, sl, 18), mat, cx, y+sr*.55, cz); shala.rotation.z = Math.PI/2;
+  for (const s of [-1,1]){ const e = mk(new THREE.CircleGeometry(sr*1.25, 18), mat, cx+s*(sl/2+.02), y+sr*.6, cz); e.rotation.y = s*Math.PI/2; }
+  const nk = tiers>=5 ? 7 : 5;
+  for (let k=0;k<nk;k++) kalasam(cx - sl/2 + .5 + k*(sl-1)/(nk-1), y+sr*1.5, cz, tiers>=5?1.1:.8);
+  return y + sr*1.5 + 1;
+}
+
+/* ---------------- figures ---------------- */
+function crownGeo(h=.45, r=.17){ return lathe([[0,0],[r,0],[r*1.05,.08],[r*.92,.14],[r*.98,.2],[r*.78,h*.6],[r*.82,h*.66],[r*.5,h*.86],[r*.2,h*.95],[0,h]], 16); }
+function deity(opt={}){ // generic standing / seated image
+  const g = new THREE.Group(), s = opt.scale||1, body = opt.mat||M.idol, orn = opt.orn||M.goldSmall;
+  const seated = !!opt.seated;
+  mk(new THREE.CylinderGeometry(.32,.38,.18,16), M.granite, 0,.09,0, g);
+  mk(new THREE.CylinderGeometry(.26,.3,.08,16), orn, 0,.22,0, g);
+  if (seated){
+    mk(boxGeo(.5,.22,.42,1), opt.cloth||M.silk, 0,.37,.03, g);
+    mk(new THREE.CylinderGeometry(.15,.17,.42,12), body, 0,.7,0, g);
+  } else {
+    mk(new THREE.CylinderGeometry(.13,.2,.62,12), opt.cloth||M.silk, 0,.57,0, g);
+    mk(new THREE.CylinderGeometry(.16,.13,.36,12), body, 0,1.06,0, g);
+  }
+  const hy = seated ? 1.02 : 1.33;
+  mk(new THREE.SphereGeometry(.1,14,10), body, 0, hy, 0, g).scale.y = 1.15;
+  if (opt.boar){ const sn = mk(new THREE.CylinderGeometry(.04,.07,.16,10), body, 0, hy-.02, .1, g); sn.rotation.x = Math.PI/2.3; }
+  if (opt.beak){ const b = mk(new THREE.ConeGeometry(.035,.12,8), M.gold, 0, hy-.02, .11, g); b.rotation.x = Math.PI/2; }
+  if (opt.crown!==false){ const c = mk(crownGeo(.26,.1), orn, 0, hy+.08, 0, g); }
+  if (opt.namam){ mk(boxGeo(.06,.06,.01,1), M.namam, 0, hy+.03, .106, g); }
+  const sh = seated ? .86 : 1.17;
+  limb(g, V(-.14,sh,0), V(-.2,sh-.24,.08), .045, body); limb(g, V(.14,sh,0), V(.2,sh-.24,.08), .045, body);
+  if (opt.fourArms){ limb(g, V(-.14,sh+.02,0), V(-.24,sh+.22,0), .04, body); limb(g, V(.14,sh+.02,0), V(.24,sh+.22,0), .04, body);
+    const ch = mk(new THREE.TorusGeometry(.06,.012,6,16), orn, -.25, sh+.3, 0, g); const sk = mk(new THREE.ConeGeometry(.035,.11,10), M.jasmine, .25, sh+.3, 0, g); }
+  if (opt.wings){ for (const sd of [-1,1]){ const wg = mk(boxGeo(.04,.62,.32,1), orn, sd*.2, sh-.02, -.08, g); wg.rotation.z = sd*.25; } }
+  if (opt.garland){ const c = new THREE.CatmullRomCurve3([V(-.14,sh,.05),V(-.12,sh-.35,.15),V(0,sh-.5,.17),V(.12,sh-.35,.15),V(.14,sh,.05)]);
+    mk(new THREE.TubeGeometry(c, 24, .025, 6, false), opt.garland, 0,0,0, g); }
+  g.scale.setScalar(s);
+  return g;
+}
+function lampStand(x,z,h=1.4,parent=world){ // brass kuthuvilakku with live flames
+  const g = new THREE.Group(); g.position.set(x,0,z); parent.add(g);
+  mk(lathe([[0,0],[.22,0],[.24,.04],[.1,.1],[.05,.18],[.04,h-.25],[.08,h-.2],[.17,h-.12],[.19,h-.06],[0,h-.08]],18), M.brass, 0,0,0, g);
+  mk(lathe([[0,0],[.03,0],[.05,.08],[.02,.22],[0,.26]],10), M.brass, 0,h-.08,0, g);
+  for (let i=0;i<5;i++){ const a = i/5*Math.PI*2; flame(x+Math.cos(a)*.15, h-.02, z+Math.sin(a)*.15, .7); }
+  return g;
+}
+const flames = [];
+const flameGeo = new THREE.ConeGeometry(.025, .09, 8); flameGeo.translate(0,.045,0);
+const flameMat = new THREE.MeshBasicMaterial({color:0xffc060, transparent:true, opacity:.95, blending:THREE.AdditiveBlending, depthWrite:false});
+const glowMat = new THREE.SpriteMaterial({map:glowTex, color:0xffb060, transparent:true, blending:THREE.AdditiveBlending, depthWrite:false});
+function flame(x,y,z,s=1,glow=true){
+  const f = new THREE.Mesh(flameGeo, flameMat); f.position.set(x,y,z); f.scale.setScalar(s); dyn.add(f);
+  let sp = null; if (glow){ sp = new THREE.Sprite(glowMat); sp.position.set(x,y+.05*s,z); sp.scale.setScalar(.55*s); dyn.add(sp); }
+  flames.push({f, sp, s, ph:Math.random()*10});
+}
+
+/* =====================================================================
+   BUILD THE TEMPLE
+   ===================================================================== */
+function buildGround(){
+  // ground with a hole for Swami Pushkarini (x 52..98, z -28..28)
+  const sh = new THREE.Shape(); sh.moveTo(-900,-900); sh.lineTo(900,-900); sh.lineTo(900,900); sh.lineTo(-900,900); sh.lineTo(-900,-900);
+  const hole = new THREE.Path(); hole.moveTo(-24,56); hole.lineTo(24,56); hole.lineTo(24,94); hole.lineTo(-24,94); hole.lineTo(-24,56); sh.holes.push(hole);
+  const gg = new THREE.ShapeGeometry(sh); // shape in (z?, x) — we map shape x->world z, shape y->world x
+  const pos = gg.attributes.position, uv = gg.attributes.uv;
+  for (let i=0;i<pos.count;i++){ const a = pos.getX(i), b = pos.getY(i); pos.setXYZ(i, b, 0, a); uv.setXY(i, a/6, b/6); }
+  gg.computeVertexNormals(); // normals should point up
+  const nArr = gg.attributes.normal; for (let i=0;i<nArr.count;i++) nArr.setXYZ(i,0,1,0);
+  const g = new THREE.Mesh(gg, M.ground); g.receiveShadow = true; scene.add(g);
+  // stone-paved precinct and Mada streets
+  const paveGeo = boxGeo(112, .1, 175, 4); const pave = new THREE.Mesh(paveGeo, M.floor); pave.position.set(0,.0,7); pave.receiveShadow = true; scene.add(pave);
+  M.floor.map.repeat.set(1,1);
+  const pave2 = new THREE.Mesh(boxGeo(52, .1, 45, 4), M.floor); pave2.position.set(75,.0,-48.5); pave2.receiveShadow=true; scene.add(pave2);
+}
+
+function buildCompound(){
+  const H = 6.5, T = 1.5;
+  // outer prakaram wall (Sampangi Pradakshinam enclosure): x ±42, z -60..60, Mahadwaram on the east (z=+60)
+  wallX(-42.75, 42.75, 60, H, T, M.granite, [[0, 6, 6.8]]);
+  wallX(-42.75, 42.75, -60, H, T, M.granite);
+  wallZ(-60, 60, 42, H, T, M.granite);
+  wallZ(-60, 60, -42, H, T, M.granite);
+  // coping band on outer walls
+  for (const s of [-1,1]){ addBox(M.plaster, 85.5, .35, 2, 0, H, s*60, {collide:false}); addBox(M.plaster, 2, .35, 121.5, s*42, H, 0, {collide:false}); }
+  // ---- Mahadwaram gopuram ----
+  gopuram(0, 60, 17, 10, 7.6, 5, 1.55, 6, 6.8, M.plaster);
+  // Sankhanidhi & Padmanidhi flanking the outer doorway
+  for (const s of [-1,1]){ const d = deity({scale:1.05, mat:M.copper, orn:M.gold, crown:true}); d.position.set(s*3.6, 0, 65.6); world.add(d); }
+  // threshold
+  addBox(M.gold, 6, .12, .5, 0, 0, 65.2, {collide:false});
+
+  // ---- inner prakaram wall (Vimana Pradakshinam enclosure): x ±26, z -42..24 ----
+  const h2 = 6;
+  wallX(-26.6, 26.6, 24, h2, 1.2, M.granite, [[0, 3.6, 4.4]]);
+  wallX(-26.6, 26.6, -42, h2, 1.2, M.granite);
+  wallZ(-42, 24, 26, h2, 1.2, M.granite);
+  wallZ(-42, 24, -26, h2, 1.2, M.granite);
+  // Nadimi Padikavali gopuram over the Vendi Vakili (silver doorway)
+  gopuram(0, 24, 12, 7, 6.2, 3, 1.35, 3.6, 4.4, M.plaster);
+  // silver door leaves (open)
+  for (const s of [-1,1]){ const d = addBox(M.silver, 1.7, 4.3, .12, s*2.75, 0, 27.62, {collide:false}); }
+  addBox(M.silver, 4, .3, .2, 0, 4.4, 27.6, {collide:false});
+  for (const s of [-1,1]) addBox(M.silver, .3, 4.4, .2, s*1.95, 0, 27.6, {collide:false});
+}
+
+function buildSampangi(){
+  // ---- Prathima (Krishnadevaraya) Mandapam just inside the Mahadwaram ----
+  mandapam(-14, 43, 14, 54.8, 5.2, 3.2, {skip:(x,z)=>Math.abs(x)<2.2});
+  // statues: Krishnadevaraya with consorts (north side), Todar Mal with mother & wife (south side) — facing the Lord (west)
+  const statue = (x,z,s,female)=>{ const g = deity({scale:s, mat:M.copper, orn:M.copper, crown:!female, cloth:M.copper}); g.position.set(x,.4,z); g.rotation.y = Math.PI; world.add(g); };
+  addBox(M.granite, 6.8, .4, 1.6, 9, 0, 47.5); statue(7, 47.5, 1.25, false); statue(9, 47.5, 1.15, true); statue(11, 47.5, 1.15, true);
+  addBox(M.granite, 6.8, .4, 1.6, -9, 0, 47.5); statue(-7, 47.5, 1.2, false); statue(-9, 47.5, 1.1, true); statue(-11, 47.5, 1.1, true);
+
+  // ---- Dhwajasthambha Mandapam, gold flagstaff and Bali Peetham ----
+  mandapam(-6.5, 27, 6.5, 39, 6.2, 3.2, {hole:[-2.2, 31, 2.2, 35.4], skip:(x,z)=>Math.abs(x)<2 && z<36});
+  const poleX = 0, poleZ = 33.2;
+  mk(new THREE.CylinderGeometry(1.1,1.3,.6,8), M.granite, poleX,.3,poleZ); circles.push({x:poleX,z:poleZ,r:1.35});
+  mk(new THREE.CylinderGeometry(.85,1.0,.6,8), M.gold, poleX,.9,poleZ);
+  mk(new THREE.CylinderGeometry(.62,.78,.5,24), M.gold, poleX,1.45,poleZ);
+  mk(new THREE.CylinderGeometry(.22,.3,15.5,16), M.gold, poleX,1.7+7.75,poleZ);
+  for (let i=0;i<16;i++) mk(new THREE.TorusGeometry(.27-i*.004,.035,6,20), M.gold, poleX, 2.3+i*.95, poleZ).rotation.x = Math.PI/2;
+  // top bracket with bells and the Garuda emblem
+  const top = 17.6; mk(boxGeo(1.6,.18,.5,1), M.gold, poleX, top, poleZ);
+  mk(boxGeo(.08,.9,.6,1), M.gold, poleX+.7, top-.85, poleZ); kalasam(poleX, top+.1, poleZ, .6);
+  // Bali Peetham — lotus altar
+  mk(lathe([[0,0],[1.1,0],[1.1,.3],[.8,.4],[.75,.7],[.95,.85],[.9,1.0],[.5,1.15],[.3,1.35],[.12,1.55],[0,1.62]],24), M.gold, 0,0,29.6);
+  circles.push({x:0,z:29.6,r:1.2});
+  // Kshetrapalaka stone near bali peetham
+  mk(new THREE.CylinderGeometry(.3,.35,.9,10), M.dark, 3.4,.45,30.2);
+
+  // ---- Ranga Mandapam (south), Tirumalaraya Mandapam (south-east), Kalyana Mandapam (north) ----
+  mandapam(-39.5, -8, -28, 14, 4.6, 2.9);
+  mandapam(-39.5, 18, -28, 32, 4.4, 2.9, {perimeter:true});
+  addBox(M.granite, 4, .8, 3, -33.8, 0, 25); // swing platform
+  for (const s of [-1,1]) addBox(M.brass, .08, 2.6, .08, -33.8+s*1.4, .8+.9, 25, {collide:false});
+  addBox(M.gold, 3, .12, 1.4, -33.8, 1.7, 25, {collide:false});
+  mandapam(28, -8, 39.5, 14, 4.6, 2.9, {perimeter:true});
+  // Kalyana vedika — wedding stage with canopy and Malayappa Swami flanked by Sridevi & Bhudevi
+  addBox(M.granite, 6, .8, 5, 34, 0, 3);
+  for (const sx of [-1,1]) for (const sz of [-1,1]) mk(new THREE.CylinderGeometry(.1,.1,2.8,10), M.gold, 34+sx*2.6, .8+1.4, 3+sz*2.1);
+  addBox(M.silkRed, 5.8, .25, 4.8, 34, 3.6, 3, {collide:false});
+  for (let k=0;k<12;k++){ const c = new THREE.CatmullRomCurve3([V(31.2+k*.5,3.55,.6),V(31.45+k*.5,3.1,.6),V(31.7+k*.5,3.55,.6)]); mk(new THREE.TubeGeometry(c,8,.04,5), k%2?M.marigold:M.jasmine); }
+  [[-1.1,.85,false],[0,1.0,true],[1.1,.85,false]].forEach(([dx,s,m],i)=>{ const d = deity({scale:s, mat:M.goldSmall, orn:M.gold, fourArms:m, garland:M.marigold}); d.position.set(34.6, .8, 3+dx); d.rotation.y = -Math.PI/2; world.add(d); });
+}
+
+function buildVimanaPradakshinam(){
+  // cloisters along the inner wall
+  const ch = 4.6;
+  for (const s of [-1,1]){
+    for (let z=-38.5; z<=20.5; z+=3.3){ if (s<0 && z>-.5 && z<19.5) continue; if (s>0 && z>8.5 && z<21.5) continue; pillar(s*21.3, z, ch); }
+    addBox(M.granite, 5.4, .45, 63, s*23.4, ch, -9.2, {collide:false});
+  }
+  for (let x=-18; x<=18; x+=3.3) pillar(x, -37.2, ch);
+  addBox(M.granite, 47.4, .45, 5.4, 0, ch, -39.4, {collide:false});
+
+  // ---- Tirumamani (Ghanta) Mandapam in front of the Bangaru Vakili ----
+  mandapam(-9.5, 5.2, 9.5, 20.2, 5.3, 3.1, {skip:(x,z)=>Math.abs(x)<1.9 || (Math.abs(x)<3 && z>10.5 && z<16)});
+  // great bells
+  for (const s of [-1,1]){
+    const bell = new THREE.Group(); bell.position.set(s*5, 5.3, 9.2); dyn.add(bell);
+    const chain = mk(new THREE.CylinderGeometry(.03,.03,.9,6), M.brass, 0,-.45,0, bell);
+    const b = mk(lathe([[0,0],[.12,0],[.3,-.15],[.4,-.55],[.55,-.95],[.6,-1.05],[0,-1.0]],20), M.brass, 0,-.9,0, bell);
+    bells.push(bell);
+  }
+  // ---- Garuda Sannidhi facing the Lord ----
+  const gz = 13.2;
+  addBox(M.granite, 3, .5, 3, 0, 0, gz);
+  wallZ(gz-1.5, gz+1.5, -1.4, 3.4, .25, M.granite); wallZ(gz-1.5, gz+1.5, 1.4, 3.4, .25, M.granite);
+  wallX(-1.5, 1.5, gz+1.4, 3.4, .25, M.granite);
+  addBox(M.granite, 3.2, .3, 3.2, 0, 3.4, gz, {collide:false});
+  const vt = mk(new THREE.ConeGeometry(1.4, 1.8, 4), M.gold, 0, 4.6, gz); vt.rotation.y = Math.PI/4; kalasam(0, 5.45, gz, .55);
+  addBox(M.gold, 2.6, .2, .3, 0, 3.0, gz-1.45, {collide:false});
+  const garuda = deity({scale:1.15, mat:M.goldSmall, orn:M.gold, wings:true, beak:true, garland:M.tulsi}); garuda.position.set(0,.5,gz+.3); garuda.rotation.y = Math.PI; world.add(garuda);
+  flame(-.9, 1.1, gz-1.2, .8); flame(.9, 1.1, gz-1.2, .8);
+
+  // ---- shrines in the Vimana Pradakshinam (positions approximate) ----
+  const shrine = (x,z,face, opts, color=M.granite)=>{
+    const g = new THREE.Group(); g.position.set(x,0,z); g.rotation.y = face; world.add(g);
+    mk(boxGeo(4,.4,4,1), M.granite, 0,.2,0, g);
+    mk(boxGeo(.3,3.2,3.4,1), color, -1.7,1.8,0, g); mk(boxGeo(.3,3.2,3.4,1), color, 1.7,1.8,0, g); mk(boxGeo(3.7,3.2,.3,1), color, 0,1.8,-1.7, g);
+    mk(boxGeo(4.2,.35,4.2,1), M.granite, 0,3.55,0, g);
+    const t = mk(new THREE.ConeGeometry(1.8,1.6,4), M.plaster, 0,4.5,0, g); t.rotation.y = Math.PI/4;
+    mk(kalasamGeo, M.gold, 0,5.25,0, g).scale.setScalar(.6);
+    const d = deity(opts); d.position.set(0,.4,-.8); g.add(d);
+    // two lamps
+    for (const s of [-1,1]){ const p = V(s*.9,1.05,.6).applyAxisAngle(V(0,1,0), face); flame(x+p.x, 1.05, z+p.z, .7); }
+    const c = V(0,0,0); const cs = Math.cos(face), sn = Math.sin(face);
+    colliders.push({x1:x-2.1, x2:x+2.1, z1:z-2.1, z2:z+2.1, open:true});
+    return g;
+  };
+  shrine(-16.5, -9, Math.PI/2, {scale:1.1, fourArms:true, garland:M.tulsi, namam:true});            // Varadaraja
+  shrine(16.5, -30, -Math.PI/2, {scale:1.0, seated:true, fourArms:true, garland:M.rose});           // Yoga Narasimha
+  shrine(-16.5, -30, Math.PI/2, {scale:1.0, seated:true, crown:false, mat:M.goldSmall, cloth:M.saffron, namam:true}); // Bhashyakarla (Ramanuja)
+  // Note: shrines are solid boxes for collision; the open side lets you see in.
+  colliders.splice(colliders.length-3, 3);
+  for (const [x,z] of [[-16.5,-9],[16.5,-30],[-16.5,-30]]){ const s = x<0?1:-1;
+    colliders.push({x1:x-2,x2:x+2,z1:z-2,z2:z-1.5}); colliders.push({x1:x-2,x2:x+2,z1:z+1.5,z2:z+2});
+    colliders.push({x1: s>0? x-2 : x+1.5, x2: s>0? x-1.5 : x+2, z1:z-2, z2:z+2}); }
+
+  // Bangaru Bavi — the golden well
+  const bx = 16, bz = -1.5;
+  mk(new THREE.CylinderGeometry(1.25,1.3,1.0,24,1,true), M.gold, bx,.5,bz).material = M.gold;
+  mk(new THREE.TorusGeometry(1.27,.08,8,28), M.gold, bx,1.0,bz).rotation.x = Math.PI/2;
+  mk(new THREE.CircleGeometry(1.2,24), M.water, bx,.6,bz).rotation.x = -Math.PI/2;
+  for (const s of [-1,1]) mk(new THREE.CylinderGeometry(.07,.07,2.4,8), M.gold, bx+s*1.15,1.2,bz);
+  mk(new THREE.CylinderGeometry(.06,.06,2.4,8), M.gold, bx,2.4,bz).rotation.z = Math.PI/2;
+  mk(new THREE.TorusGeometry(.18,.04,6,14), M.brass, bx,2.4,bz).rotation.y = Math.PI/2;
+  circles.push({x:bx,z:bz,r:1.4});
+
+  // Srivari Hundi (Koppera) — brass vessel draped in white cloth
+  const hx = 11.5, hz = 8;
+  mk(lathe([[0,0],[.6,0],[.95,.4],[1.05,.9],[.9,1.3],[.7,1.45],[0,1.45]],24), M.brass, hx,0,hz);
+  const cl = mk(new THREE.SphereGeometry(1.15,20,12,0,Math.PI*2,0,Math.PI/2), M.cloth, hx,1.1,hz); cl.scale.y = .55;
+  mk(new THREE.CylinderGeometry(.18,.24,.3,12), M.brass, hx,1.65,hz);
+  circles.push({x:hx,z:hz,r:1.3});
+  for (const s of [-1,1]) addBox(M.brass, .08, 1, 3.4, hx+s*1.8, 0, hz, {collide:false});
+
+  // Potu (temple kitchen, south) and Parakamani (north)
+  wallZ(1, 18.5, -19, 4, .5, M.granite, [[9.5, 2, 2.8]]); wallX(-25.4, -19, 1, 4, .5, M.granite); wallX(-25.4, -19, 18.5, 4, .5, M.granite);
+  addBox(M.granite, 6.8, .4, 18, -22.2, 4, 9.75, {collide:false});
+  addBox(M.dark, 1.2, 3, 1.2, -23.8, 4.4, 14, {collide:false});
+  for (let k=0;k<3;k++){ addBox(M.dark, 1.6, .9, 1.2, -24.2, 0, 4+k*2.4); flame(-24.2, .95, 4.4+k*2.4, 1.6); }
+  wallZ(10, 20.5, 19, 4, .5, M.granite, [[15, 2, 2.8]]); wallX(19, 25.4, 10, 4, .5, M.granite); wallX(19, 25.4, 20.5, 4, .5, M.granite);
+  addBox(M.granite, 6.8, .4, 11, 22.2, 4, 15.25, {collide:false});
+  for (let k=0;k<3;k++) addBox(M.cloth, 1.2, .6, 1.6, 22.5, 0, 12.2+k*2.6);
+}
+
+function buildSanctum(){
+  // Ananda Nilayam block: x ±8, z -18..4.6
+  const H = 6.6;
+  wallZ(-18.6, 4.6, 8, H, 1.2, M.granite); wallZ(-18.6, 4.6, -8, H, 1.2, M.granite);
+  wallX(-8.6, 8.6, -18, H, 1.2, M.granite);
+  wallX(-7.4, 7.4, 4, H, 1.2, M.granite, [[0, 2.6, 3.4]]);
+  addBox(M.granite, 17.2, .55, 23.2, 0, H, -7, {collide:false});
+  for (const yy of [.2, 1.1]) for (const s of [-1,1]) addBox(M.granite, .3, .3, 23.2, s*8.6, yy, -7, {collide:false});
+  // ---- Bangaru Vakili — the golden doorway ----
+  for (const s of [-1,1]){ addBox(M.gold, 1.2, 4.0, .35, s*1.9, 0, 4.75); addBox(M.gold, .25, 4.2, .4, s*1.42, 0, 4.78, {collide:false}); }
+  addBox(M.gold, 5.0, .9, .35, 0, 3.4, 4.75, {collide:false});
+  addBox(M.gold, 3.2, .14, .7, 0, 0, 4.4, {collide:false});            // golden threshold
+  for (let k=0;k<5;k++) kalasam(-1.6+k*.8, 4.3, 4.85, .32, M.goldSmall);
+  // door leaves (gold, open inward)
+  for (const s of [-1,1]){ const d = addBox(M.gold, 1.25, 3.3, .1, s*1.95, 0, 3.0, {collide:false}); d.rotation.y = s*1.25; d.position.x = s*1.5; d.position.z = 3.1; }
+  // mango-leaf toranam
+  for (let k=0;k<14;k++){ const l = mk(new THREE.ConeGeometry(.07,.32,4), M.tulsi, -1.3+k*.2, 3.15, 4.95); l.rotation.x = Math.PI; }
+  // Jaya & Vijaya dvarapalakas
+  for (const s of [-1,1]){
+    addBox(M.granite, 1.4, .6, 1.2, s*3.3, 0, 5.6);
+    const d = deity({scale:1.85, mat:M.copper, orn:M.gold, fourArms:true, cloth:M.gold}); d.position.set(s*3.3,.6,5.6); world.add(d);
+    const gada = mk(new THREE.CylinderGeometry(.05,.12,1.3,10), M.gold, s*3.3+s*.55, 1.25, 5.85);
+  }
+
+  // ---- interior rooms ----
+  // Snapana Mandapam: z -2..3.4, x ±6.8
+  addBox(M.granite, 13.6, .3, 5.4, 0, 4.4, .7, {collide:false});
+  for (const [x,z] of [[-3.2,2.2],[3.2,2.2],[-3.2,-.8],[3.2,-.8]]) pillar(x,z,4.4,0,.3);
+  addBox(M.silver, 1.8, .9, 1.2, -4.9, 0, .6); // offering table / snapana vedika
+  const koluvu = deity({scale:.55, mat:M.silver, orn:M.gold, fourArms:true}); koluvu.position.set(4.9,.6,-.2); koluvu.rotation.y = -Math.PI/2; world.add(koluvu);
+  addBox(M.gold, 1.4, .6, 1.4, 4.9, 0, -.2); // throne of Koluvu Srinivasa
+  // wall z=-2 with silver framed door
+  wallX(-6.8, 6.8, -2.2, 4.4, .6, M.granite, [[0, 2.0, 3.0]]);
+  for (const s of [-1,1]) addBox(M.silver, .2, 3.1, .7, s*1.05, 0, -2.2, {collide:false});
+  addBox(M.silver, 2.3, .25, .7, 0, 2.95, -2.2, {collide:false});
+  // fill solid sides beyond the inner passage
+  for (const s of [-1,1]) addBox(M.dark, 3.4, 4.4, 14.8, s*5.1, 0, -10.1);
+  // Ramula Vari Meda: z -6.4..-2.5, x ±3.4
+  addBox(M.granite, 6.8, .3, 15, 0, 3.7, -10, {collide:false});
+  for (const s of [-1,1]){
+    addBox(M.granite, .9, .9, 3.2, s*2.9, 0, -4.4);
+    [[-1,'Rama'],[0,'Sita'],[1,'Lakshmana']].forEach(([k])=>{ const d = deity({scale:.5, mat:M.goldSmall, orn:M.gold, garland:M.tulsi}); d.position.set(s*2.9,.9,-4.4+k*.9); d.rotation.y = -s*Math.PI/2; world.add(d); });
+  }
+  wallX(-3.4, 3.4, -6.6, 3.7, .5, M.granite, [[0, 1.8, 2.8]]);
+  for (const s of [-1,1]) addBox(M.gold, .18, 2.9, .6, s*.95, 0, -6.6, {collide:false});
+  addBox(M.gold, 2.1, .22, .6, 0, 2.75, -6.6, {collide:false});
+  // Sayana Mandapam: z -10.4..-6.8 — golden cot hung on chains
+  const cot = new THREE.Group(); cot.position.set(-2.1, 0, -8.6); world.add(cot);
+  mk(boxGeo(.75,.12,1.8,1), M.gold, 0,.75,0, cot); mk(boxGeo(.7,.12,1.7,1), M.silkRed, 0,.86,0, cot);
+  for (const sx of [-1,1]) for (const sz of [-1,1]) mk(new THREE.CylinderGeometry(.015,.015,2.9,4), M.silver, sx*.34, 2.25, sz*.85, cot);
+  colliders.push({x1:-2.55,x2:-1.65,z1:-9.55,z2:-7.65});
+  // wall z=-10.6 with the Kulasekhara Padi threshold
+  wallX(-3.4, 3.4, -10.6, 3.7, .5, M.granite, [[0, 1.6, 2.6]]);
+  for (const s of [-1,1]) addBox(M.gold, .18, 2.7, .6, s*.85, 0, -10.6, {collide:false});
+  addBox(M.gold, 1.9, .22, .6, 0, 2.55, -10.6, {collide:false});
+  addBox(M.gold, 1.5, .1, .55, 0, 0, -10.6, {collide:false});           // Kulasekhara Padi
+  // Garbha Griha: z -17.4..-10.85, x ±3.4, low dark ceiling
+  addBox(M.soot, 6.8, .3, 6.6, 0, 3.75, -14.1, {collide:false});
+  for (const s of [-1,1]) addBox(M.soot, .1, 3.75, 6.5, s*3.35, 0, -14.1, {collide:false});
+  addBox(M.soot, 6.8, 3.75, .1, 0, 0, -17.35, {collide:false});
+
+  // ---- the Moolavirat ----
+  const mv = makeMoolavirat(); mv.position.set(0, 0, -15.6); world.add(mv);
+  circles.push({x:0, z:-15.6, r:1.05});
+  // Bhoga Srinivasa (Kautuka Beram) at the Lord's feet, tied with the sambandha thread
+  const bhoga = deity({scale:.32, mat:M.silver, orn:M.gold, fourArms:true}); bhoga.position.set(.55, .45, -14.8); world.add(bhoga);
+  const thread = new THREE.CatmullRomCurve3([V(.55,.75,-14.8),V(.35,.62,-15.0),V(.14,.6,-15.25)]); mk(new THREE.TubeGeometry(thread,10,.006,4), M.kumkum);
+  // lamps in the sanctum
+  lampStand(-1.55, -13.9, 1.35); lampStand(1.55, -13.9, 1.35);
+  for (const s of [-1,1]){ // hanging lamps
+    const z = -12.4; mk(new THREE.CylinderGeometry(.008,.008,1.4,4), M.brass, s*1.1, 3.05, z);
+    mk(lathe([[0,0],[.16,.02],[.2,.08],[0,.09]],14), M.brass, s*1.1, 2.3, z); flame(s*1.1, 2.37, z, .9);
+  }
+  // Akhanda deepam
+  mk(lathe([[0,0],[.3,0],[.33,.1],[.08,.16],[.06,.6],[.3,.72],[0,.75]],16), M.brass, -2.7, 0, -12); flame(-2.7, .78, -12, 1.2);
+  // Sayana / Ramula / Snapana lamps
+  flame(-3.1, 1.0, -4.4, .6); flame(3.1, 1.0, -4.4, .6);
+  lampStand(-5.8, 3.2, 1.6); lampStand(5.8, 3.2, 1.6);
+
+  // ---- Ananda Nilayam Vimanam (gilded) above the Garbha Griha ----
+  const cz = -12.6; let y = H + .55;
+  const tiers = [[12.0, 2.6],[10.2, 2.2],[8.4, 2.0]];
+  tiers.forEach(([w,h],i)=>{
+    addBox(M.gold, w, h, w, 0, y, cz, {collide:false});
+    addBox(M.gold, w+.6, .25, w+.6, 0, y+h, cz, {collide:false});
+    const n = Math.max(3, Math.floor(w/2.4));
+    for (let k=0;k<n;k++){ const kk = -w/2 + (k+.5)*w/n;
+      kudu(kk, y+.12, cz+w/2+.1, .8, h*.66, 1, M.gold, 0); kudu(kk, y+.12, cz-w/2-.1, .8, h*.66, 1, M.gold, Math.PI);
+      kudu(w/2+.1, y+.12, cz+kk, .8, h*.66, 1, M.gold, Math.PI/2); kudu(-w/2-.1, y+.12, cz+kk, .8, h*.66, 1, M.gold, -Math.PI/2); }
+    // guardian lions at corners
+    for (const sx of [-1,1]) for (const sz of [-1,1]){ const l = mk(boxGeo(.5,.7,.9,1), M.gold, sx*(w/2-.3), y+h+.6, cz+sz*(w/2-.3)); mk(new THREE.SphereGeometry(.28,10,8), M.gold, sx*(w/2-.3), y+h+1.0, cz+sz*(w/2-.3)+.3*sz); }
+    y += h + .25;
+  });
+  mk(new THREE.CylinderGeometry(3.1, 3.4, 1.3, 32), M.gold, 0, y+.65, cz);
+  for (let k=0;k<8;k++){ const a = k/8*Math.PI*2; kudu(Math.cos(a)*3.25, y+.1, cz+Math.sin(a)*3.25, .7, 1.0, 1, M.gold, Math.PI/2-a); }
+  y += 1.3;
+  const dome = mk(new THREE.SphereGeometry(4.0, 32, 16, 0, Math.PI*2, 0, Math.PI/2), M.gold, 0, y, cz); dome.scale.y = .9;
+  // ribs on the dome
+  for (let k=0;k<16;k++){ const a = k/16*Math.PI*2; const rib = new THREE.CatmullRomCurve3(Array.from({length:9},(_,i)=>{ const t = i/8*Math.PI/2; return V(Math.cos(a)*Math.cos(t)*4.02, y+Math.sin(t)*3.62, cz+Math.sin(a)*Math.cos(t)*4.02); }));
+    mk(new THREE.TubeGeometry(rib, 16, .06, 5), M.gold); }
+  mk(new THREE.CylinderGeometry(.55,.8,.5,20), M.gold, 0, y+3.75, cz);
+  kalasam(0, y+3.95, cz, 2.0);
+  // Vimana Venkateswara on the northern face, framed in a silver arch, with an arrow marker
+  const vvx = 6.25, vvy = H + .55 + .35;
+  const vv = deity({scale:.85, mat:M.goldSmall, orn:M.gold, fourArms:true, namam:true}); vv.position.set(vvx, vvy, cz); vv.rotation.y = Math.PI/2; world.add(vv);
+  const arch = mk(new THREE.TorusGeometry(.75, .07, 8, 24, Math.PI), M.silver, vvx+.15, vvy+1.25, cz); arch.rotation.y = Math.PI/2;
+  for (const s of [-1,1]) mk(new THREE.CylinderGeometry(.06,.06,1.3,8), M.silver, vvx+.15, vvy+.6, cz+s*.75);
+  const arrow = mk(new THREE.ConeGeometry(.22,.6,4), M.silver, vvx+.2, vvy+2.4, cz); arrow.rotation.z = Math.PI;
+}
+
+function makeMoolavirat(){
+  const g = new THREE.Group(), S = M.idol, G = M.gold;
+  const add = (geo, mat, x,y,z)=>mk(geo, mat, x,y,z, g);
+  // lotus peetham
+  add(new THREE.CylinderGeometry(.8,.9,.32,32), M.dark, 0,.16,0);
+  for (let i=0;i<18;i++){ const a = i/18*Math.PI*2; const p = add(new THREE.SphereGeometry(.15,10,6), G, Math.cos(a)*.62,.38,Math.sin(a)*.62); p.scale.set(.7,.45,1.2); p.rotation.y = -a; }
+  add(new THREE.CylinderGeometry(.56,.64,.14,32), G, 0,.45,0);
+  // feet in gold kavachas
+  for (const s of [-1,1]){ const f = add(boxGeo(.17,.11,.32,1), G, s*.14,.57,.07); add(new THREE.SphereGeometry(.09,10,8), G, s*.14,.6,-.03); }
+  // pitambaram (yellow silk) with border
+  add(new THREE.CylinderGeometry(.31,.44,1.02,24), M.silk, 0,1.1,0);
+  add(new THREE.CylinderGeometry(.442,.446,.08,24), G, 0,.62,0);
+  add(boxGeo(.16,.95,.04,1), M.silk, 0,1.08,.36).rotation.x = -.08;
+  add(boxGeo(.03,.95,.045,1), G, -.08,1.08,.37); add(boxGeo(.03,.95,.045,1), G, .08,1.08,.37);
+  // waist belts (katibandha) & Surya katari
+  add(new THREE.TorusGeometry(.31,.04,8,28), G, 0,1.6,0).rotation.x = Math.PI/2;
+  add(new THREE.TorusGeometry(.32,.025,8,28), G, 0,1.53,0).rotation.x = Math.PI/2;
+  const kat = add(boxGeo(.05,.55,.03,1), G, .34,1.35,.12); kat.rotation.z = -.12;
+  // torso
+  add(new THREE.CylinderGeometry(.37,.30,.62,24), S, 0,1.92,0);
+  for (const s of [-1,1]) add(new THREE.SphereGeometry(.15,14,10), S, s*.36,2.16,0);
+  add(new THREE.CylinderGeometry(.1,.11,.14,14), S, 0,2.27,0);
+  // Vyuha Lakshmi on the right chest (idol's right = -x)
+  add(new THREE.CylinderGeometry(.075,.075,.02,20), G, -.15,2.02,.325).rotation.x = Math.PI/2.2;
+  add(new THREE.SphereGeometry(.025,8,6), M.gem, -.15,2.05,.345);
+  // necklaces
+  [[.2,2.13,G],[.25,2.07,G],[.31,2.0,G],[.38,1.9,G]].forEach(([r,y,m],i)=>{ const t = add(new THREE.TorusGeometry(r,.018+i*.004,6,28,Math.PI), m, 0,y,.12+i*.02); t.rotation.set(Math.PI*1.08,0,0); t.scale.y = 1.25; });
+  for (let i=0;i<9;i++){ add(new THREE.SphereGeometry(.028,8,6), i%2?M.gem:M.emerald, -.24+i*.06, 1.95-Math.sin(i/8*Math.PI)*.18, .34); }
+  // Saligrama haram (dark stone beads) and flower garlands
+  const garland = (pts, r, mat, beads)=>{ const c = new THREE.CatmullRomCurve3(pts.map(p=>V(...p)));
+    if (beads){ for (let i=0;i<=40;i++){ const p = c.getPoint(i/40); add(new THREE.SphereGeometry(r,6,5), mat, p.x,p.y,p.z); } }
+    else add(new THREE.TubeGeometry(c, 60, r, 7, false), mat, 0,0,0); };
+  garland([[-.3,2.18,.08],[-.36,1.7,.3],[-.25,1.25,.42],[0,1.05,.47],[.25,1.25,.42],[.36,1.7,.3],[.3,2.18,.08]], .028, M.dark, true);
+  garland([[-.34,2.2,.04],[-.44,1.6,.32],[-.36,.95,.48],[0,.78,.53],[.36,.95,.48],[.44,1.6,.32],[.34,2.2,.04]], .055, M.tulsi);
+  garland([[-.32,2.2,.06],[-.4,1.7,.34],[-.3,1.3,.47],[0,1.18,.52],[.3,1.3,.47],[.4,1.7,.34],[.32,2.2,.06]], .045, M.marigold);
+  garland([[-.28,2.22,.1],[-.33,1.85,.36],[0,1.55,.46],[.33,1.85,.36],[.28,2.22,.1]], .04, M.jasmine);
+  garland([[-.38,2.15,.0],[-.5,1.4,.25],[-.45,.7,.42],[0,.6,.5],[.45,.7,.42],[.5,1.4,.25],[.38,2.15,.0]], .035, M.rose);
+  // head and face
+  const head = add(new THREE.SphereGeometry(.17,24,18), S, 0,2.46,.01); head.scale.set(1,1.18,1);
+  for (const s of [-1,1]){ add(new THREE.TorusGeometry(.055,.018,8,16), G, s*.17,2.36,.0).rotation.y = Math.PI/2; add(new THREE.SphereGeometry(.04,10,8), M.gem, s*.17,2.3,.02); }
+  // the broad white namam (Urdhva Pundram) covering the eyes, with central red srichurnam
+  const nm = new THREE.Shape();
+  nm.moveTo(-.13,.17); nm.lineTo(-.06,.17); nm.lineTo(-.025,-.04); nm.quadraticCurveTo(0,-.07,.025,-.04); nm.lineTo(.06,.17); nm.lineTo(.13,.17);
+  nm.lineTo(.07,-.09); nm.quadraticCurveTo(0,-.16,-.07,-.09); nm.lineTo(-.13,.17);
+  const nmg = new THREE.ExtrudeGeometry(nm, {depth:.02, bevelEnabled:false});
+  const namam = add(nmg, M.namam, 0,2.47,.178); namam.rotation.x = -.12;
+  add(boxGeo(.1,.07,.03,1), M.namam, 0,2.46,.19); // band across the eyes
+  add(boxGeo(.022,.22,.02,1), M.kumkum, 0,2.52,.207);
+  add(boxGeo(.06,.012,.01,1), M.kumkum, 0,2.33,.145); // lips hint
+  // kiritam (crown)
+  const kir = add(crownGeo(.62,.2), G, 0,2.62,0);
+  for (let i=0;i<5;i++) add(new THREE.TorusGeometry(.2-i*.02,.014,6,24), G, 0,2.74+i*.09,0).rotation.x = Math.PI/2;
+  for (let i=0;i<7;i++){ const a = -Math.PI/2.4 + i*Math.PI/7.2; add(new THREE.SphereGeometry(.022,8,6), i%2?M.emerald:M.gem, Math.sin(a)*.2, 2.78, Math.cos(a)*.2); }
+  add(new THREE.ConeGeometry(.04,.12,8), G, 0,3.3,0);
+  // four arms
+  for (const s of [-1,1]){ // upper arms raise the Chakra (right, -x) and Shankha (left, +x)
+    limb(g, V(s*.4,2.12,0), V(s*.58,2.32,-.04), .07, S);
+    limb(g, V(s*.58,2.32,-.04), V(s*.56,2.62,-.04), .055, S);
+    add(new THREE.TorusGeometry(.075,.02,6,16), G, s*.49,2.22,-.02).rotation.z = s*.9;
+  }
+  const ck = new THREE.Group(); ck.position.set(-.56, 2.82, -.03); g.add(ck);
+  mk(new THREE.TorusGeometry(.15,.028,8,30), G, 0,0,0, ck); mk(new THREE.CylinderGeometry(.04,.04,.04,12), G, 0,0,0, ck).rotation.x = Math.PI/2;
+  for (let i=0;i<8;i++){ const sp = mk(boxGeo(.015,.27,.015,1), G, 0,0,0, ck); sp.rotation.z = i/8*Math.PI; }
+  for (let i=0;i<10;i++){ const a = i/10*Math.PI*2; const f = mk(new THREE.ConeGeometry(.025,.07,6), G, Math.cos(a)*.2, Math.sin(a)*.2, 0, ck); f.rotation.z = a - Math.PI/2; }
+  const sk = mk(lathe([[0,0],[.05,.02],[.09,.1],[.1,.2],[.07,.28],[.03,.33],[0,.35]],18), M.jasmine, .56,2.68,-.03, g);
+  mk(new THREE.CylinderGeometry(.06,.07,.05,16), G, .56,2.7,-.03, g);
+  // lower right: Varada hasta, palm pointing to the feet (gold-covered)
+  limb(g, V(-.42,2.08,.02), V(-.5,1.72,.12), .07, S); limb(g, V(-.5,1.72,.12), V(-.4,1.42,.24), .058, S);
+  const rh = add(boxGeo(.1,.18,.05,1), G, -.38,1.32,.27); rh.rotation.set(.3,0,-.4);
+  // lower left: Kati hasta resting on the thigh (gold-covered)
+  limb(g, V(.42,2.08,.02), V(.5,1.72,.1), .07, S); limb(g, V(.5,1.72,.1), V(.36,1.48,.22), .058, S);
+  const lh = add(boxGeo(.18,.08,.1,1), G, .3,1.45,.26); lh.rotation.z = .3;
+  for (const s of [-1,1]){ add(new THREE.TorusGeometry(.07,.02,6,16), G, s*.5,1.72,.11).rotation.x = Math.PI/2; } // armlets
+  // Naga-abharanam on the arms
+  for (const s of [-1,1]) add(new THREE.TorusGeometry(.065,.012,6,16), M.silver, s*.45,1.57,.17).rotation.x = Math.PI/2;
+  // makara torana (gold arch) behind
+  const tor = add(new THREE.TorusGeometry(1.35,.08,10,48,Math.PI), G, 0,1.95,-.45);
+  for (const s of [-1,1]) add(new THREE.CylinderGeometry(.08,.1,1.95,12), G, s*1.35,.97,-.45);
+  for (let i=0;i<19;i++){ const a = i/18*Math.PI; const f = add(new THREE.ConeGeometry(.05,.18,6), G, Math.cos(a)*1.47, 1.95+Math.sin(a)*1.47, -.45); f.rotation.z = a - Math.PI/2; }
+  add(boxGeo(2.9,2.0,.05,1), M.dark, 0,1.0,-.62);
+  return g;
+}
+
+function buildPushkarini(){
+  // Swami Pushkarini — stepped tank north of the temple, x 56..94, z -24..24
+  const X1=56, X2=94, Z1=-24, Z2=24, step=.7, rise=.45;
+  addBox(M.granite, X2-X1+4, .12, 2, (X1+X2)/2, 0, Z2+1, {collide:false});
+  for (let k=0;k<6;k++){
+    const i = k*step, top = -rise*(k), h = 3.4;
+    const x1=X1+i, x2=X2-i, z1=Z1+i, z2=Z2-i;
+    addBox(M.granite, x2-x1, h, step, (x1+x2)/2, top-h, z1+step/2, {collide:false});
+    addBox(M.granite, x2-x1, h, step, (x1+x2)/2, top-h, z2-step/2, {collide:false});
+    addBox(M.granite, step, h, z2-z1-2*step, x1+step/2, top-h, (z1+z2)/2, {collide:false});
+    addBox(M.granite, step, h, z2-z1-2*step, x2-step/2, top-h, (z1+z2)/2, {collide:false});
+  }
+  const bot = mk(new THREE.PlaneGeometry(X2-X1, Z2-Z1), M.dark, (X1+X2)/2, -3.3, (Z1+Z2)/2, scene); bot.rotation.x = -Math.PI/2;
+  const w = mk(new THREE.PlaneGeometry(X2-X1-8, Z2-Z1-8), M.water, (X1+X2)/2, -2.15, (Z1+Z2)/2); w.rotation.x = -Math.PI/2; w.userData.dynamic = true; dyn.add(w); waterMesh = w;
+  M.water.map.repeat.set(6,6);
+  colliders.push({x1:X1, x2:X2, z1:Z1, z2:Z2});
+  // central Neerazhi mandapam rising from the water
+  addBox(M.granite, 7, 2.4, 7, 75, -2.4, 0, {collide:false});
+  mandapam(71.5, -3.5, 78.5, 3.5, 3.6, 3.3, {perimeter:true, noParapet:false});
+  const vt = mk(new THREE.ConeGeometry(2.6, 2.2, 4), M.plaster, 75, 5.3, 0); vt.rotation.y = Math.PI/4; kalasam(75, 6.35, 0, .8);
+  // Teppam (float) moored on the eastern steps
+  addBox(M.wood, 4, .4, 2.2, 75, -2.2, 18, {collide:false});
+  for (const sx of [-1,1]) for (const sz of [-1,1]) mk(new THREE.CylinderGeometry(.05,.05,1.6,6), M.gold, 75+sx*1.7, -1.0, 18+sz*.9);
+  addBox(M.silkRed, 3.8, .12, 2.1, 75, -.15, 18, {collide:false});
+}
+
+function buildVaraha(){
+  // Sri Bhu Varaha Swamy temple on the north-west bank of the Pushkarini, facing east
+  const cx = 75, cz = -42;
+  wallZ(cz-5, cz+5, cx-4, 5, .8, M.granite); wallZ(cz-5, cz+5, cx+4, 5, .8, M.granite);
+  wallX(cx-4.4, cx+4.4, cz-5, 5, .8, M.granite); wallX(cx-4.4, cx+4.4, cz+5, 5, .8, M.granite, [[cx, 2.2, 3.4]]);
+  addBox(M.granite, 9.2, .4, 10.8, cx, 5, cz, {collide:false});
+  let y = 5.4; [[7,1.6],[5.6,1.4],[4.2,1.2]].forEach(([w,h])=>{ addBox(M.plaster, w, h, w, cx, y, cz-1, {collide:false}); addBox(M.plaster, w+.4,.2,w+.4,cx,y+h,cz-1,{collide:false}); y+=h+.2; });
+  const d = mk(new THREE.SphereGeometry(1.6,20,10,0,Math.PI*2,0,Math.PI/2), M.plaster, cx, y, cz-1); kalasam(cx, y+1.55, cz-1, 1);
+  mandapam(cx-4.2, cz+5.4, cx+4.2, cz+11, 4.2, 2.8, {skip:(x,z)=>Math.abs(x-cx)<1.4});
+  const v = deity({scale:1.35, mat:M.idol, orn:M.gold, boar:true, fourArms:true, garland:M.marigold}); v.position.set(cx-.2, .3, cz-3); world.add(v);
+  const bh = deity({scale:.55, mat:M.idol, orn:M.gold, seated:true}); bh.position.set(cx+.65, 1.2, cz-2.8); world.add(bh);
+  lampStand(cx-1.4, cz-1.5, 1.2); lampStand(cx+1.4, cz-1.5, 1.2);
+  addBox(M.dark, 7, 4.8, .1, cx, 0, cz-4.5, {collide:false});
+}
+
+function buildSurroundings(){
+  // Akhilandam — camphor & coconut offering platform opposite the Mahadwaram
+  addBox(M.granite, 6, .55, 3, 0, 0, 75);
+  for (let i=0;i<6;i++) flame(-2+i*.8, .6, 75, 1.5);
+  for (let i=0;i<14;i++){ const c = mk(new THREE.SphereGeometry(.11,8,6), M.wood, 3.6+Math.random()*1.2, .1, 74+Math.random()*2); }
+  // street lamps on the Mada streets
+  const lampPos = [];
+  for (let z=-70; z<=95; z+=14){ lampPos.push([-50,z],[50,z]); }
+  for (let x=-36; x<=36; x+=14){ lampPos.push([x,-70],[x,88]); }
+  lampPos.forEach(([x,z])=>{ mk(new THREE.CylinderGeometry(.08,.12,5,8), M.dark, x,2.5,z); const h = new THREE.Mesh(new THREE.SphereGeometry(.28,10,8), M.lampHead); h.position.set(x,5.1,z); dyn.add(h);
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex, color:0xffd9a0, transparent:true, blending:THREE.AdditiveBlending, depthWrite:false})); sp.position.set(x,5.1,z); sp.scale.setScalar(3.5); dyn.add(sp); streetGlows.push(sp, h); circles.push({x,z,r:.25}); });
+  // hills of Seshachalam — the seven hills around
+  const hillGeo = new THREE.IcosahedronGeometry(1, 3);
+  const pa = hillGeo.attributes.position;
+  for (let i=0;i<pa.count;i++){ const x=pa.getX(i), y=pa.getY(i), z=pa.getZ(i); const n = 1 + .18*Math.sin(x*5+z*3) + .12*Math.cos(z*7-y*4); pa.setXYZ(i, x*n, Math.max(y*n,-.2), z*n); }
+  hillGeo.computeVertexNormals();
+  for (let i=0;i<22;i++){
+    const a = i/22*Math.PI*2 + Math.random()*.2, r = 380 + Math.random()*260;
+    const h = mk(hillGeo, M.hill, Math.cos(a)*r, -10, Math.sin(a)*r, scene); h.scale.set(130+Math.random()*120, 45+Math.random()*70, 130+Math.random()*120); h.castShadow = false;
+  }
+  // trees (instanced)
+  const N = isTouch ? 260 : 480;
+  const crown = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1,1), M.leaf, N);
+  const trunk = new THREE.InstancedMesh(new THREE.CylinderGeometry(.15,.25,1,6), M.bark, N);
+  const m4 = new THREE.Matrix4(), q = new THREE.Quaternion();
+  let c = 0, guard = 0;
+  while (c<N && guard++<5000){
+    const x = (Math.random()-.5)*640, z = (Math.random()-.5)*640;
+    if (x>-62 && x<105 && z>-82 && z<108) continue;
+    const s = 2.2 + Math.random()*2.5;
+    m4.compose(V(x, s*1.6, z), q, V(s, s*1.15, s)); crown.setMatrixAt(c, m4);
+    m4.compose(V(x, s*.5, z), q, V(s*.5, s*1.0, s*.5)); trunk.setMatrixAt(c, m4); c++;
+  }
+  [crown, trunk].forEach(o=>{ o.castShadow = true; o.receiveShadow = true; o.count = c; scene.add(o); });
+}
+
+/* ---------------- static mesh merge (big win on mobile) ---------------- */
+function mergeStatic(root){
+  root.updateMatrixWorld(true);
+  const buckets = new Map(), removeList = [];
+  root.traverse(o=>{
+    if (!o.isMesh || o.isInstancedMesh || !o.visible || o.userData.dynamic) return;
+    const k = o.material.uuid; if (!buckets.has(k)) buckets.set(k, {mat:o.material, list:[]});
+    buckets.get(k).list.push(o); removeList.push(o);
+  });
+  removeList.forEach(o=>o.parent && o.parent.remove(o));
+  for (const b of buckets.values()){
+    let total = 0;
+    const geos = b.list.map(o=>{ let g = o.geometry.index ? o.geometry.toNonIndexed() : o.geometry.clone();
+      if (!g.attributes.uv) g.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(g.attributes.position.count*2),2));
+      if (!g.attributes.normal) g.computeVertexNormals();
+      g.applyMatrix4(o.matrixWorld); total += g.attributes.position.count; return g; });
+    const pos = new Float32Array(total*3), nor = new Float32Array(total*3), uv = new Float32Array(total*2); let off = 0;
+    geos.forEach(g=>{ pos.set(g.attributes.position.array, off*3); nor.set(g.attributes.normal.array, off*3); uv.set(g.attributes.uv.array, off*2); off += g.attributes.position.count; g.dispose(); });
+    const mg = new THREE.BufferGeometry();
+    mg.setAttribute('position', new THREE.BufferAttribute(pos,3)); mg.setAttribute('normal', new THREE.BufferAttribute(nor,3)); mg.setAttribute('uv', new THREE.BufferAttribute(uv,2));
+    mg.computeBoundingSphere();
+    const m = new THREE.Mesh(mg, b.mat); m.castShadow = true; m.receiveShadow = true; m.frustumCulled = false; scene.add(m);
+  }
+  scene.remove(root);
+}
+
+/* =====================================================================
+   SKY, SUN, MOON, STARS, LIGHTS
+   ===================================================================== */
+const skyMat = new THREE.ShaderMaterial({
+  side: THREE.BackSide, depthWrite: false, fog: false,
+  uniforms: { top:{value:new THREE.Color()}, hor:{value:new THREE.Color()}, sunCol:{value:new THREE.Color()}, sunDir:{value:new THREE.Vector3()}, sunVis:{value:1}, moonDir:{value:new THREE.Vector3()}, moonVis:{value:0} },
+  vertexShader: `varying vec3 vDir; void main(){ vec4 w = modelMatrix*vec4(position,1.); vDir = w.xyz - cameraPosition; gl_Position = projectionMatrix*viewMatrix*w; }`,
+  fragmentShader: `uniform vec3 top, hor, sunCol, sunDir, moonDir; uniform float sunVis, moonVis; varying vec3 vDir;
+    void main(){ vec3 d = normalize(vDir); float h = max(d.y,0.);
+      vec3 c = mix(hor, top, pow(h, .5)); if (d.y<0.) c = hor*.8;
+      float s = max(dot(d, sunDir), 0.);
+      c += sunCol*(smoothstep(.9994,.9997,s)*6. + pow(s,10.)*.35 + pow(s,3.)*.08)*sunVis;
+      float m = max(dot(d, moonDir), 0.);
+      c += vec3(.9,.92,1.)*(smoothstep(.9990,.9993,m)*1.4 + pow(m,60.)*.08)*moonVis;
+      gl_FragColor = vec4(c,1.); }`
+});
+const sky = new THREE.Mesh(new THREE.SphereGeometry(1500, 32, 16), skyMat); sky.renderOrder = -1; scene.add(sky);
+const starGeo = new THREE.BufferGeometry(); { const n = 1800, p = new Float32Array(n*3);
+  for (let i=0;i<n;i++){ const u = Math.random()*Math.PI*2, v = Math.random()*.95; const r = 1400; p[i*3] = Math.cos(u)*Math.sqrt(1-v*v)*r; p[i*3+1] = v*r; p[i*3+2] = Math.sin(u)*Math.sqrt(1-v*v)*r; }
+  starGeo.setAttribute('position', new THREE.BufferAttribute(p,3)); }
+const starMat = new THREE.PointsMaterial({color:0xffffff, size:1.6, sizeAttenuation:false, transparent:true, opacity:0, fog:false, depthWrite:false});
+const stars = new THREE.Points(starGeo, starMat); scene.add(stars);
+
+const hemi = new THREE.HemisphereLight(0xcfe3ff, 0x6b5a40, .6); scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xffffff, 2.4); sun.castShadow = true; scene.add(sun); scene.add(sun.target);
+const moon = new THREE.DirectionalLight(0x8fa6d8, 0); scene.add(moon); scene.add(moon.target);
+function setShadowQuality(){
+  const sz = quality==='high' ? 2048 : (quality==='balanced' ? 1024 : 512);
+  renderer.shadowMap.enabled = quality !== 'low';
+  sun.shadow.mapSize.set(sz, sz); if (sun.shadow.map){ sun.shadow.map.dispose(); sun.shadow.map = null; }
+  const S = 46; Object.assign(sun.shadow.camera, {left:-S, right:S, top:S, bottom:-S, near:1, far:260}); sun.shadow.camera.updateProjectionMatrix();
+  sun.shadow.bias = -.0006; sun.shadow.normalBias = .04;
+  renderer.setPixelRatio(Math.min(devicePixelRatio, quality==='high'?2:(quality==='balanced'?1.5:1)));
+  scene.traverse(o=>{ if (o.material && o.material.needsUpdate !== undefined) o.material.needsUpdate = true; });
+}
+// lamp lights inside (limited number for mobile)
+const lampLights = [
+  [0, 2.0, -13.0, 1.55, 8],   // Garbha Griha
+  [0, 2.3, -7.0, 1.4, 8],     // Sayana / Ramula Vari Meda
+  [0, 2.8, .8, 1.6, 10],      // Snapana Mandapam
+  [0, 3.4, 8.0, 1.4, 14],     // Bangaru Vakili / Tirumamani
+].map(([x,y,z,i,d])=>{ const l = new THREE.PointLight(0xffa24a, i, d, 1.6); l.position.set(x,y,z); l.userData.base = i; scene.add(l); return l; });
+const floodlight = new THREE.PointLight(0xffc27a, 0, 45, 1.2); floodlight.position.set(14, 22, 2); scene.add(floodlight);
+
+/* ---------------- time of day ---------------- */
+let hours = (()=>{ const d = new Date(); return d.getHours() + d.getMinutes()/60; })();
+let timeMode = 'live'; // live | fast | pause
+const tmp = new THREE.Color(), tmp2 = new THREE.Color();
+const C = (h)=>new THREE.Color(h);
+const SKY = { dayTop:C(0x3f7fcf), dayHor:C(0xbcd6ee), duskTop:C(0x2a3a6e), duskHor:C(0xf0965a), nightTop:C(0x03060f), nightHor:C(0x0f1a33) };
+let dayF = 1, indoor = 0;
+const sunDir = new THREE.Vector3();
+function updateSky(){
+  const a = (hours-6)/12*Math.PI;
+  sunDir.set(-.32, Math.sin(a), Math.cos(a)).normalize();
+  const el = sunDir.y;
+  dayF = THREE.MathUtils.smoothstep(el, -.14, .22);
+  const dusk = Math.max(0, 1 - Math.abs(el)/.28) * (el>-.2?1:0);
+  const top = tmp.copy(SKY.nightTop).lerp(SKY.dayTop, dayF).lerp(SKY.duskTop, dusk*.5);
+  const hor = tmp2.copy(SKY.nightHor).lerp(SKY.dayHor, dayF).lerp(SKY.duskHor, dusk*.75);
+  skyMat.uniforms.top.value.copy(top); skyMat.uniforms.hor.value.copy(hor);
+  skyMat.uniforms.sunDir.value.copy(sunDir);
+  skyMat.uniforms.sunCol.value.set(0xfff0d0).lerp(C(0xff8a3a), dusk);
+  skyMat.uniforms.sunVis.value = THREE.MathUtils.smoothstep(el, -.06, .02);
+  const moonDir = sunDir.clone().multiplyScalar(-1); moonDir.y = Math.abs(moonDir.y)*.9 + .15; moonDir.normalize();
+  skyMat.uniforms.moonDir.value.copy(moonDir); skyMat.uniforms.moonVis.value = 1 - dayF;
+  scene.fog.color.copy(hor);
+  starMat.opacity = Math.max(0, 1 - dayF*1.6);
+  // lights
+  const sunI = THREE.MathUtils.smoothstep(el, -.03, .25);
+  sun.intensity = 2.7*sunI; sun.color.set(0xfff4e2).lerp(C(0xff9a50), dusk*.8);
+  moon.intensity = .22*(1-dayF); moon.position.copy(moonDir).multiplyScalar(100);
+  const inside = 1 - .78*indoor;
+  hemi.intensity = (.12 + .6*dayF) * inside; hemi.color.copy(top).lerp(C(0xffffff), .45); hemi.groundColor.set(0x5a4a34).multiplyScalar(.4+.6*dayF);
+  renderer.toneMappingExposure = (1.05 - .2*dayF) + .25*indoor;
+  // night illumination of gopurams and the golden vimana
+  const night = 1 - dayF;
+  M.gold.emissiveIntensity = .4*night; M.plaster.emissiveIntensity = .3*night;
+  M.gold.envMapIntensity = .35 + .75*dayF; M.goldSmall.envMapIntensity = .35 + .75*dayF; M.silver.envMapIntensity = .3 + .7*dayF; M.brass.envMapIntensity = .3+.6*dayF;
+  M.idol.envMapIntensity = .15 + .35*dayF*(1-indoor);
+  floodlight.intensity = 1.6*night;
+  streetGlows.forEach(o=>{ if (o.isSprite) o.material.opacity = night; else o.visible = night>.2; });
+}
+
+/* =====================================================================
+   CONTENT: places, hotspots, guide
+   ===================================================================== */
+const SPOTS = [
+ {id:'start', name:'Tirumala, the Seven Hills', x:0, z:98, r:12, html:`
+  <p>You are standing on the Mada streets, east of the temple. The shrine of <b>Sri Venkateswara Swamy</b> sits on <b>Venkatadri</b>, one of the seven peaks of the Seshachalam hills, roughly 850 m above sea level near Tirupati in Andhra Pradesh.</p>
+  <p>The seven hills are Seshadri, Neeladri, Garudadri, Anjanadri, Vrishabhadri, Narayanadri and Venkatadri; tradition sees them as the seven hoods of Adisesha, the serpent on whom Vishnu rests.</p>
+  <p>The Lord is called Srinivasa, Balaji, Govinda and Elumalaiyan (Lord of the Seven Hills). The temple is one of the 108 Divya Desams sung by the Alwars and is administered by Tirumala Tirupati Devasthanams (TTD).</p>
+  <p>Custom suggests a bath in Swami Pushkarini and darshan of Sri Varaha Swamy before entering. Both are to your right (north), across the street.</p>`},
+ {id:'akhilandam', name:'Akhilandam', x:0, z:75, r:5, html:`
+  <p>The open area facing the Mahadwaram where pilgrims break coconuts and light camphor before (and after) darshan, often to fulfil a vow (<span class="te">మొక్కు</span>, mokku).</p>`},
+ {id:'mahadwaram', name:'Mahadwaram', x:0, z:61, r:6, html:`
+  <p>The main gateway, also called <b>Padikavali</b> or Simhadwaram, crowned by a five-tiered gopuram. Everything inside these walls is the outer circuit, <b>Sampangi Pradakshinam</b>.</p>
+  <p>Images of <b>Sankhanidhi</b> and <b>Padmanidhi</b>, guardians of the Lord’s treasures, flank the entrance. The temple walls carry hundreds of inscriptions in Tamil, Telugu, Kannada and Sanskrit, from the Pallava and Chola periods through the Vijayanagara era.</p>`},
+ {id:'prathima', name:'Prathima Mandapam', x:0, z:48.5, r:7.5, html:`
+  <p>Also called the Krishnadevaraya Mandapam. Here stand metal portrait-statues of the Vijayanagara emperor <b>Sri Krishnadevaraya</b> with his queens <b>Chinna Devi</b> and <b>Tirumala Devi</b>, hands joined, facing the Lord. He visited Tirumala several times between 1513 and 1521 and made rich gifts of gold and jewels.</p>
+  <p>Opposite are statues associated with Raja <b>Todar Mal</b> with members of his family. Statues of other royal patrons such as Venkatapati Raya are also recorded in this hall.</p>`},
+ {id:'dhwaja', name:'Dhwajasthambham and Bali Peetham', x:0, z:31.5, r:6, html:`
+  <p>The gold-plated <b>flagstaff</b>. At the start of the annual <b>Brahmotsavam</b> (usually September–October) the Garuda flag is hoisted here (Dhwajarohanam), inviting the gods to the festival, and lowered on the last day.</p>
+  <p>In front stands the lotus-shaped <b>Bali Peetham</b>, where offerings to the attendant deities are placed after the Lord’s naivedyam. Many pilgrims prostrate fully on the ground here. Close by is a small stone for the <b>Kshetrapalaka</b>, guardian of the sacred site.</p>`},
+ {id:'ranga', name:'Ranga Mandapam', x:-34, z:3, r:8, html:`
+  <p>A pillared hall on the southern side of the Sampangi Pradakshinam. Tradition and inscriptions hold that during the upheavals of the 14th century, the festival image of <b>Sri Ranganatha</b> of Srirangam was sheltered here for safety, around 1320–1360.</p>
+  <p>Today it is often used to give Vedic blessings (Vedasirvachanam) and prasadam to pilgrims.</p>`},
+ {id:'tirumalaraya', name:'Tirumalaraya Mandapam', x:-34, z:25, r:6, html:`
+  <p>A 15th-century hall associated with the Saluva rulers, used for the Lord’s <b>Unjal Seva</b> (swing festival) and for asthanams (formal courts) of the festival image during certain festivals. The swing platform is modelled in front of you.</p>`},
+ {id:'kalyana', name:'Kalyana Mandapam', x:34, z:3, r:8, html:`
+  <p>The celestial wedding, <b>Kalyanotsavam</b>, of <b>Malayappa Swami</b> (the festival image) with <b>Sridevi</b> and <b>Bhudevi</b> is performed for pilgrims almost every day as an arjitha (paid) seva. Families who sponsor it receive the Lord’s blessings for their own marriages.</p>`},
+ {id:'vendi', name:'Vendi Vakili', x:0, z:24, r:3.8, html:`
+  <p>The <b>Silver Doorway</b> in the second gopuram (Nadimi Padikavali). Its doors are clad in silver. Beyond it lies the <b>Vimana Pradakshinam</b>, the inner path that circles Ananda Nilayam. Pilgrims walk it clockwise, keeping the Lord on their right.</p>`},
+ {id:'vimpra', name:'Vimana Pradakshinam', x:-15, z:17, r:6, html:`
+  <p>The inner circuit around the sanctum. Along it are shrines of <b>Varadaraja Swamy</b>, <b>Yoga Narasimha Swamy</b> and <b>Sri Ramanuja</b> (Bhashyakarla Sannidhi); the temple kitchen (<b>Potu</b>); the golden well (<b>Bangaru Bavi</b>); the <b>Srivari Hundi</b>; the <b>Parakamani</b> where offerings are counted; and the spot to view <b>Vimana Venkateswara</b> on the golden tower.</p>
+  <p class="note">The positions of these shrines in this model are approximate.</p>`},
+ {id:'garuda', name:'Garuda Sannidhi', x:0, z:12.5, r:3.4, html:`
+  <p><b>Garuda</b>, the eagle who carries Vishnu, stands with folded hands in a small shrine directly facing the Bangaru Vakili, gazing forever at his Lord. On the fifth night of Brahmotsavam the Lord rides on Garuda in the great <b>Garuda Seva</b> procession.</p>`},
+ {id:'ghanta', name:'Tirumamani (Ghanta) Mandapam', x:5.5, z:13, r:5, html:`
+  <p>The pillared hall before the golden doorway, also called the <b>Ghanta Mandapam</b> after its great bells. The bells are rung when food offerings (naivedyam) are made to the Lord, announcing them across the temple. Tap the bell button to ring them.</p>`},
+ {id:'bangaru', name:'Bangaru Vakili', x:0, z:6.2, r:3.2, html:`
+  <p>The <b>Golden Doorway</b>, the entrance to the sanctum complex. It is guarded by the dvarapalakas <b>Jaya</b> and <b>Vijaya</b>, standing figures with maces.</p>
+  <p>Before dawn each day the <b>Suprabhatam</b>, the waking hymn composed in the 15th century by Prativadi Bhayankaram Annangaracharya, is recited before these doors to awaken the Lord.</p>`},
+ {id:'snapana', name:'Snapana Mandapam', x:0, z:.6, r:3.2, html:`
+  <p>Also called <b>Tiruvilan Koil</b>, among the oldest parts of the structure. Ritual bathing of the smaller images takes place here.</p>
+  <p>Each morning <b>Koluvu Srinivasa</b> holds court (Koluvu) here: the day’s almanac (panchangam) is read out and the previous day’s accounts are reported to the Lord, as to a king.</p>`},
+ {id:'ramula', name:'Ramula Vari Meda', x:0, z:-4.4, r:2.2, html:`
+  <p>The chamber of <b>Sri Rama</b>. Images of Sri Rama, Sita and Lakshmana are kept here, with figures of Rama’s devotees. One of the seven hills, Anjanadri, is revered as the birthplace of Hanuman.</p>`},
+ {id:'sayana', name:'Sayana Mandapam', x:0, z:-8.6, r:2.2, html:`
+  <p>The chamber of rest. Every night at <b>Ekantha Seva</b>, the last ritual of the day, <b>Bhoga Srinivasa</b> is laid on a golden cot here while a lullaby is sung. By tradition a descendant of the saint-composer <b>Annamacharya</b> (Tallapaka family) sings it.</p>`},
+ {id:'kulasekhara', name:'Kulasekhara Padi', x:0, z:-10.6, r:1.1, html:`
+  <p>The golden threshold step between the Sayana Mandapam and the sanctum, named after <b>Kulasekhara Alwar</b>, the Chera king and saint who prayed to be a step at Venkatam, so he could forever see the Lord’s face.</p>
+  <p>Pilgrims do not cross this step; only the archakas enter the Garbha Griha. Here, you may go on.</p>`},
+ {id:'moolavirat', name:'The Moolavirat', x:0, z:-13.5, r:2.6, html:`
+  <p class="te">శ్రీ వేంకటేశ్వర స్వామి</p>
+  <p>The main image, the <b>Dhruva Beram</b> (the fixed image), worshipped as <b>svayambhu</b> (self-manifested). It is a standing figure of dark stone, about 2.5 m (8 ft) tall, on a lotus pedestal.</p>
+  <p><b>Four arms.</b> The upper right holds the <b>Sudarshana Chakra</b> and the upper left the <b>Panchajanya Shankha</b>; these are fitted gold ornaments. The lower right hand is in <b>Varada hasta</b>, pointing down to his feet: take refuge at my feet. The lower left rests on the thigh in <b>Kati hasta</b>: for those who surrender, the ocean of worldly life is only this deep.</p>
+  <p><b>Sri on his chest.</b> Lakshmi (Vyuha Lakshmi) dwells on his right chest, which is why he is called Srinivasa, the abode of Sri.</p>
+  <p><b>The namam.</b> His eyes are covered by a broad white <b>Urdhva Pundram</b> of edible camphor (pachai karpuram) with a red line of srichurnam in the centre; tradition says his gaze is too powerful to behold directly. On Thursdays the namam is made thinner, so the eyes can be glimpsed (Netra Darshanam).</p>
+  <p><b>Adornment.</b> A tall diamond-studded crown (kiritam), makara kundalas (ear ornaments), gold kavachams on hands and feet, a Saligrama haram, many necklaces, a sword (Surya Katari) at the waist, yellow silk (pitambaram) and fresh garlands of tulasi and flowers prepared daily.</p>
+  <p><b>At his feet</b> stands <b>Bhoga Srinivasa</b>, a small silver image joined to the Moolavirat by a thread (sambandha kircha) so that worship offered to it reaches the main image.</p>
+  <p class="note">Photography is not permitted inside the sanctum, so this figure is a respectful artistic reconstruction from published descriptions, not an exact copy.</p>`},
+ {id:'vimana', name:'Ananda Nilayam Vimanam', x:-13, z:-13, r:5.5, html:`
+  <p>The tower over the sanctum, “the abode of bliss”. It is a three-tiered vimana crowned by a round dome and a golden kalasam, covered in gilded copper plates that glow at sunrise and under floodlights at night.</p>
+  <p>Inscriptions record its gilding from the 13th century onward, and it has been re-gilded several times since. Look up from here to see it.</p>`},
+ {id:'vimvenk', name:'Vimana Venkateswara', x:14, z:-13, r:4.5, html:`
+  <p>On the northern face of the golden vimana, under a silver arch with an arrow marker above it, is a small image of the Lord known as <b>Vimana Venkateswara</b>. Devotees believe a darshan of this image is as meritorious as darshan of the Moolavirat. Look up.</p>`},
+ {id:'bavi', name:'Bangaru Bavi', x:16, z:-1.5, r:3, html:`
+  <p>The <b>golden well</b>. Its water is used in the Lord’s rituals and in preparing the offerings.</p>`},
+ {id:'hundi', name:'Srivari Hundi', x:11.5, z:8, r:3, html:`
+  <p>The Lord’s offering vessel (koppera), a brass vessel covered in white cloth. Pilgrims offer money, gold and vows here.</p>
+  <p>The legend: to marry Padmavati, Srinivasa borrowed a great sum from <b>Kubera</b>, the lord of wealth, and devotees help repay that loan through their offerings until the end of Kali Yuga. The hundi is emptied and counted in the <b>Parakamani</b>.</p>`},
+ {id:'varadaraja', name:'Varadaraja Swamy Sannidhi', x:-16.5, z:-9, r:4, html:`
+  <p>A shrine of <b>Varadaraja</b>, the form of Vishnu worshipped at Kanchipuram, in the Vimana Pradakshinam.</p>`},
+ {id:'narasimha', name:'Yoga Narasimha Sannidhi', x:16.5, z:-30, r:4, html:`
+  <p><b>Narasimha</b>, the man-lion avatar, seated in a meditative yoga posture. Tradition links the shrine’s installation with the time of Sri Ramanuja.</p>`},
+ {id:'ramanuja', name:'Bhashyakarla Sannidhi', x:-16.5, z:-30, r:4, html:`
+  <p>The shrine of <b>Sri Ramanuja</b> (Bhashyakara, author of the Sri Bhashya), the 11th–12th century acharya who organised the worship at Tirumala. Tradition says that he settled a dispute over the deity’s identity, and that the Shankha and Chakra placed on the image affirmed him as Vishnu.</p>`},
+ {id:'potu', name:'Potu (temple kitchen)', x:-21, z:9, r:5, html:`
+  <p>The kitchen where the Lord’s food offerings are cooked over wood fires. The world-famous <b>Tirupati Laddu</b> received a Geographical Indication (GI) tag in 2009; it is now made in large kitchens adjoining the temple.</p>`},
+ {id:'parakamani', name:'Parakamani', x:20, z:15, r:4, html:`
+  <p>Where the offerings from the hundi are sorted and counted, under supervision, every day.</p>`},
+ {id:'pushkarini', name:'Swami Pushkarini', x:52, z:2, r:12, html:`
+  <p>The sacred tank on the north side of the temple. Legend holds that it was the Lord’s pleasure tank in Vaikuntha, brought to earth by Garuda. A bath here before darshan is believed to cleanse sins.</p>
+  <p>On the last day of Brahmotsavam the Sudarshana Chakra is given its holy dip here (<b>Chakrasnanam</b>), and during <b>Teppotsavam</b> (February–March) the Lord floats on a decorated raft around the central mandapam.</p>`},
+ {id:'varaha', name:'Sri Bhu Varaha Swamy', x:75, z:-34, r:7, html:`
+  <p>Tirumala is called <b>Adi Varaha Kshetra</b>. Legend says these hills were the domain of Varaha, the boar avatar who lifted Bhudevi (Earth) from the ocean. Srinivasa asked Varaha for a place to stay, and agreed that pilgrims would worship Varaha first and that the first offering would be made to him.</p>
+  <p>That is why custom asks pilgrims to have darshan here before visiting Sri Venkateswara.</p>`},
+];
+const PLACES = [
+  ['Mada Streets (start)', 'Outside, east', 0, 100, 0],
+  ['Mahadwaram', 'Main gateway', 0, 70, 0],
+  ['Dhwajasthambham', 'Gold flagstaff', 0, 41, 0],
+  ['Vendi Vakili', 'Silver doorway', 0, 27.8, 0],
+  ['Bangaru Vakili', 'Golden doorway', 0, 9.5, 0],
+  ['Kulasekhara Padi', 'Before the sanctum', 0, -9.6, 0],
+  ['Before the Moolavirat', 'Inside the sanctum', 0, -12.2, 0],
+  ['Vimana Venkateswara', 'North side, look up', 15.5, -13, Math.PI/2],
+  ['Ananda Nilayam', 'South side, look up', -16, -13, -Math.PI/2],
+  ['Srivari Hundi', 'Vimana Pradakshinam', 13, 11.5, Math.PI*.15],
+  ['Ranga Mandapam', 'Sampangi, south', -25, 3, Math.PI/2],
+  ['Swami Pushkarini', 'Sacred tank', 50, 10, -Math.PI/2],
+  ['Varaha Swamy', 'Visit first, by custom', 75, -27, 0],
+];
+const ZONES = [
+  ['Garbha Griha', 'The sanctum', -3.4,3.4,-17.4,-10.85, 1],
+  ['Sayana Mandapam', 'Ananda Nilayam', -3.4,3.4,-10.85,-6.6, 1],
+  ['Ramula Vari Meda', 'Ananda Nilayam', -3.4,3.4,-6.6,-2.4, 1],
+  ['Snapana Mandapam', 'Ananda Nilayam', -7,7,-2.4,4, .8],
+  ['Tirumamani Mandapam', 'Before the Bangaru Vakili', -9.5,9.5,4,21.5, .35],
+  ['Vimana Pradakshinam', 'Inner circuit', -26,26,-42,24, 0],
+  ['Prathima Mandapam', 'Sampangi Pradakshinam', -14,14,42.5,58, .3],
+  ['Dhwajasthambha Mandapam', 'Sampangi Pradakshinam', -7,7,26,39, .2],
+  ['Ranga Mandapam', 'Sampangi Pradakshinam', -40,-27.5,-8,14, .3],
+  ['Tirumalaraya Mandapam', 'Sampangi Pradakshinam', -40,-27.5,17.5,32.5, .3],
+  ['Kalyana Mandapam', 'Sampangi Pradakshinam', 27.5,40,-8,14, .3],
+  ['Mahadwaram', 'Main gateway', -9,9,55,65.5, .3],
+  ['Sampangi Pradakshinam', 'Outer circuit', -42,42,-60,60, 0],
+  ['Swami Pushkarini', 'Sacred tank', 50,100,-30,30, 0],
+  ['Sri Bhu Varaha Swamy', 'North-west of the tank', 70,80,-48,-31, .7],
+];
+const SCHEDULE = [
+  [2.5, 3, 'Suprabhatam', 'The Lord is awakened with the Suprabhatam hymn at the Bangaru Vakili.'],
+  [3.5, 4, 'Thomala Seva', 'Garlands of flowers and tulasi are offered, with hymns.'],
+  [4, 4.5, 'Koluvu and Panchanga Sravanam', 'Court of Koluvu Srinivasa in the Snapana Mandapam; almanac and accounts read out.'],
+  [4.5, 5.5, 'Sahasranama Archana', 'The thousand names of the Lord are chanted.'],
+  [6, 7, 'First bell and naivedyam', 'Food offerings; the great bells ring in the Tirumamani Mandapam.'],
+  [7, 12, 'Darshan', 'Pilgrims file past the Kulasekhara Padi for darshan.'],
+  [12, 13, 'Kalyanotsavam', 'The celestial wedding of Malayappa Swami in the Sampangi Pradakshinam.'],
+  [13, 19, 'Darshan', 'Darshan continues; Dolotsavam and Arjitha Brahmotsavam are performed during the day.'],
+  [19, 20, 'Night Thomala and Archana', 'Evening garlanding, archana and naivedyam.'],
+  [20, 25, 'Darshan', 'Darshan continues late into the night.'],
+  [1, 2.5, 'Ekantha Seva', 'Bhoga Srinivasa rests on the golden cot in the Sayana Mandapam; the Tallapaka lullaby is sung. The doors close briefly.'],
+];
+function sevaNow(h){ for (const s of SCHEDULE){ if ((h>=s[0] && h<s[1]) || (h+24>=s[0] && h+24<s[1])) return s; } return null; }
+
+const GUIDE = `
+<details open><summary>The temple</summary>
+<p>Sri Venkateswara Swamy Vari Temple stands on Venkatadri in the Seshachalam range. It is among the most visited places of worship in the world, often seeing tens of thousands of pilgrims a day and far more on festival days.</p>
+<p>The layout moves inward through three enclosures: the <b>Sampangi Pradakshinam</b> (outer circuit, entered by the Mahadwaram), the <b>Vimana Pradakshinam</b> (inner circuit, entered by the Vendi Vakili), and the sanctum complex entered through the <b>Bangaru Vakili</b>: Snapana Mandapam, Ramula Vari Meda, Sayana Mandapam and the <b>Garbha Griha</b>, crowned by the gilded <b>Ananda Nilayam</b> vimana.</p>
+<p>A narrow passage around the sanctum, the <b>Vaikuntha Dwaram</b> (Mukkoti Pradakshinam), is opened to pilgrims only around Vaikuntha Ekadasi.</p></details>
+<details><summary>The Moolavirat in detail</summary>
+<p>Standing image of dark stone, about 2.5 m tall, regarded as self-manifested. Four arms: Chakra (upper right), Shankha (upper left), Varada hasta pointing to the feet (lower right), Kati hasta on the thigh (lower left). Lakshmi on the right chest. A thick white namam of camphor covers the eyes, thinned on Thursdays. On Fridays the Lord receives abhishekam (sacred bath) with fragrant substances such as camphor, saffron, sandal and musk-like punugu oil.</p>
+<p>No one knows of any consecration record for the main image; scholars and tradition both treat it as among the most ancient elements of the temple.</p></details>
+<details><summary>The five images (Pancha Beras)</summary>
+<p><b>Dhruva Beram</b>, the Moolavirat itself, never moved.</p>
+<p><b>Kautuka Beram (Bhoga Srinivasa)</b>, a small silver image gifted in 966 CE by the Pallava queen Samavai, receives daily worship and rests on the golden cot at night.</p>
+<p><b>Snapana Beram (Ugra Srinivasa)</b>, the fierce form, comes out only once a year, before sunrise on Kaisika Dwadasi.</p>
+<p><b>Utsava Beram (Malayappa Swami)</b>, with Sridevi and Bhudevi, the festival image that rides the vahanams in procession.</p>
+<p><b>Bali Beram (Koluvu Srinivasa)</b>, who holds the daily court and receives the temple’s accounts.</p></details>
+<details><summary>Legend of Srinivasa</summary>
+<p>When the sage Bhrigu struck Vishnu on the chest, where Lakshmi dwells, she left Vaikuntha in hurt. Vishnu came to earth searching for her and lived in an anthill on Venkatadri, fed by a cow. As Srinivasa, raised by Vakula Devi, he met and married <b>Padmavati</b>, daughter of King Akasa Raja. For the wedding he took a loan from Kubera, which devotees help repay through the hundi. He chose to remain on the hills through Kali Yuga to bless his devotees. Padmavati’s temple is at Tiruchanur, below the hills.</p></details>
+<details><summary>History</summary>
+<p>Ancient Tamil literature refers to Venkatam as the northern border of the Tamil country. The temple received patronage from the Pallavas, Cholas, Pandyas, Yadavarayas and, most lavishly, the Vijayanagara emperors, especially Krishnadevaraya. Sri Ramanuja organised the worship in the 11th–12th century. <b>Tallapaka Annamacharya</b> (1408–1503) is said to have composed 32,000 sankirtanas on the Lord, many preserved on copper plates.</p>
+<p>Under British rule administration passed to the Mahants of Hathiramji Mutt (1843), and in 1932–33 to Tirumala Tirupati Devasthanams (TTD).</p></details>
+<details><summary>Festivals</summary>
+<p><b>Brahmotsavam</b>, nine days in September–October (with an additional Navaratri Brahmotsavam in some years); the Lord rides a different vahanam each morning and night, with <b>Garuda Seva</b> on the fifth night, Rathotsavam (chariot), and Chakrasnanam in the Pushkarini.</p>
+<p>Also <b>Vaikuntha Ekadasi</b>, <b>Rathasapthami</b> (seven vahanams in one day), <b>Teppotsavam</b>, <b>Vasanthotsavam</b>, <b>Pavithrotsavam</b>, <b>Pushpayagam</b> and <b>Anivara Asthanam</b>.</p></details>
+<details><summary>Pilgrim traditions</summary>
+<p>Walking up the hills by the Alipiri footpath (about 3,550 steps) or Srivari Mettu; offering hair at <b>Kalyana Katta</b> as a gesture of surrendering ego; bathing in Swami Pushkarini; Varaha darshan first; the hundi; and receiving <b>laddu prasadam</b> and free meals at the annaprasadam halls.</p></details>
+<details><summary>About this 3D model</summary>
+<p class="note">The temple has never been fully photographed or surveyed in public, and photography inside is prohibited. This walkthrough is a respectful, simplified reconstruction based on published descriptions. The sequence of spaces and major features follows the real temple; exact dimensions, carvings, and the positions of minor shrines are approximate. The ritual timings shown are typical and change on festival days; check TTD for current schedules.</p></details>`;
+
+/* =====================================================================
+   UI wiring
+   ===================================================================== */
+const sheet = $('#sheet'), sTitle = $('#sTitle'), sBody = $('#sBody');
+let sheetOpen = false;
+function openSheet(title, html){ sTitle.textContent = title; sBody.innerHTML = html; sBody.scrollTop = 0; sheet.classList.add('open'); sheetOpen = true; }
+function closeSheet(){ sheet.classList.remove('open'); sheetOpen = false; }
+$('#sClose').onclick = closeSheet;
+sheet.addEventListener('pointerdown', e=>e.stopPropagation());
+let nearSpot = null;
+$('#chipBtn').onclick = ()=>{ if (nearSpot) openSheet(nearSpot.name, nearSpot.html); };
+$('#bBook').onclick = ()=>openSheet('Temple guide', GUIDE);
+$('#bGo').onclick = ()=>{
+  openSheet('Go to', `<p>Jump straight to a place.</p><div class="places">${PLACES.map((p,i)=>`<button data-i="${i}">${p[0]}<small>${p[1]}</small></button>`).join('')}</div>`);
+  sBody.querySelectorAll('[data-i]').forEach(b=>b.onclick = ()=>{ const p = PLACES[+b.dataset.i]; player.x = p[2]; player.z = p[3]; player.yaw = p[4]; player.pitch = p[0].includes('look up') || p[1].includes('look up') ? .45 : 0; closeSheet(); });
+};
+function fmt(h){ h = ((h%24)+24)%24; const hh = Math.floor(h), mm = Math.floor((h-hh)*60); const ap = hh<12?'AM':'PM'; return `${((hh+11)%12)+1}:${String(mm).padStart(2,'0')} ${ap}`; }
+function renderTime(){
+  const s = sevaNow(hours);
+  openSheet('Time of day', `
+    <div class="clock" id="clk">${fmt(hours)}</div>
+    <input type="range" id="tr" min="0" max="24" step="0.05" value="${hours.toFixed(2)}" aria-label="Time of day">
+    <div class="seg" role="group" aria-label="Clock">
+      <button data-m="live" aria-pressed="${timeMode==='live'}">Real time</button>
+      <button data-m="fast" aria-pressed="${timeMode==='fast'}">Fast (1 hr = 10 s)</button>
+      <button data-m="pause" aria-pressed="${timeMode==='pause'}">Hold</button>
+    </div>
+    <div class="seva" id="sv">${s?`<b>${s[2]}</b><br>${s[3]}`:'Darshan'}</div>
+    <table class="sched">${SCHEDULE.map(r=>`<tr class="${r===s?'now':''}"><td>${fmt(r[0])}</td><td><b>${r[2]}</b></td></tr>`).join('')}</table>
+    <p class="note">Typical daily order of rituals. Exact timings vary, especially on Tuesdays, Thursdays, Fridays and festival days.</p>`);
+  const tr = $('#tr');
+  tr.oninput = ()=>{ hours = +tr.value; timeMode = 'pause'; sBody.querySelectorAll('[data-m]').forEach(b=>b.setAttribute('aria-pressed', b.dataset.m==='pause')); updateSky(); $('#clk').textContent = fmt(hours); const s2 = sevaNow(hours); $('#sv').innerHTML = s2?`<b>${s2[2]}</b><br>${s2[3]}`:'Darshan'; };
+  sBody.querySelectorAll('[data-m]').forEach(b=>b.onclick = ()=>{ timeMode = b.dataset.m; if (timeMode==='live'){ const d = new Date(); hours = d.getHours()+d.getMinutes()/60; } renderTime(); });
+}
+$('#bTime').onclick = renderTime;
+$('#bSet').onclick = ()=>{
+  openSheet('Settings', `<p>Graphics quality. Use a lower setting if walking feels slow on your phone.</p>
+    <div class="seg">${['low','balanced','high'].map(q=>`<button data-q="${q}" aria-pressed="${quality===q}">${q[0].toUpperCase()+q.slice(1)}</button>`).join('')}</div>
+    <p>Look sensitivity</p><input type="range" id="sens" min="0.4" max="2" step="0.1" value="${sens}" aria-label="Look sensitivity">`);
+  sBody.querySelectorAll('[data-q]').forEach(b=>b.onclick = ()=>{ quality = b.dataset.q; setShadowQuality(); renderer.setSize(innerWidth, innerHeight); $('#bSet').onclick(); });
+  $('#sens').oninput = e=>{ sens = +e.target.value; };
+};
+let showMap = false;
+$('#bMap').onclick = ()=>{ showMap = !showMap; $('#bMap').setAttribute('aria-pressed', showMap); $('#mini').style.display = showMap?'block':'none'; };
+
+/* bell */
+let actx = null; const bells = []; let bellSwing = 0;
+function ringBell(){
+  try{
+    actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+    if (actx.state === 'suspended') actx.resume();
+    const t = actx.currentTime, out = actx.createGain(); out.gain.value = .22; out.connect(actx.destination);
+    [[420,1],[840*1.007,.55],[1260*.995,.35],[1730,.22],[2390,.12],[3110,.06]].forEach(([f,a],i)=>{
+      const o = actx.createOscillator(), g = actx.createGain(); o.type = 'sine'; o.frequency.value = f;
+      g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(a,t+.008); g.gain.exponentialRampToValueAtTime(.0001,t+4.2-i*.45);
+      o.connect(g); g.connect(out); o.start(t); o.stop(t+4.3);
+    });
+  }catch(e){}
+  bellSwing = 1;
+}
+$('#bBell').onclick = ringBell;
+
+/* =====================================================================
+   PLAYER & CONTROLS
+   ===================================================================== */
+const player = {x:0, z:100, yaw:0, pitch:0, bob:0};
+let sens = 1;
+const keys = {};
+addEventListener('keydown', e=>{ keys[e.code] = true; if (e.code==='KeyE' && nearSpot && !sheetOpen) openSheet(nearSpot.name, nearSpot.html); if (e.code==='Escape') closeSheet(); if (e.code==='KeyM') $('#bMap').onclick(); });
+addEventListener('keyup', e=>{ keys[e.code] = false; });
+const joy = {id:null, ox:0, oy:0, x:0, y:0}, look = {id:null, lx:0, ly:0};
+const joyEl = $('#joy'), knob = joyEl.querySelector('i');
+const touchLayer = $('#touch');
+touchLayer.addEventListener('pointerdown', e=>{
+  if (sheetOpen){ closeSheet(); return; }
+  touchLayer.setPointerCapture(e.pointerId);
+  if (e.pointerType !== 'mouse' && e.clientX < innerWidth*.45 && joy.id===null){
+    joy.id = e.pointerId; joy.ox = e.clientX; joy.oy = e.clientY; joy.x = joy.y = 0;
+    joyEl.style.display = 'block'; joyEl.style.left = (e.clientX-60)+'px'; joyEl.style.top = (e.clientY-60)+'px'; knob.style.transform = '';
+  } else if (look.id===null){ look.id = e.pointerId; look.lx = e.clientX; look.ly = e.clientY; }
+  hideHint();
+});
+touchLayer.addEventListener('pointermove', e=>{
+  if (e.pointerId===joy.id){ let dx = e.clientX-joy.ox, dy = e.clientY-joy.oy; const d = Math.hypot(dx,dy), m = 55; if (d>m){ dx*=m/d; dy*=m/d; }
+    joy.x = dx/m; joy.y = dy/m; knob.style.transform = `translate(${dx}px,${dy}px)`; }
+  else if (e.pointerId===look.id){ const k = (e.pointerType==='mouse' ? .0032 : .0052)*sens;
+    player.yaw -= (e.clientX-look.lx)*k; player.pitch -= (e.clientY-look.ly)*k; player.pitch = Math.max(-1.35, Math.min(1.35, player.pitch));
+    look.lx = e.clientX; look.ly = e.clientY; }
+});
+const endPtr = e=>{ if (e.pointerId===joy.id){ joy.id = null; joy.x = joy.y = 0; joyEl.style.display = 'none'; } if (e.pointerId===look.id) look.id = null; };
+touchLayer.addEventListener('pointerup', endPtr); touchLayer.addEventListener('pointercancel', endPtr);
+let hintHidden = false; function hideHint(){ if (hintHidden) return; hintHidden = true; setTimeout(()=>$('#hint').style.opacity = 0, 2500); }
+if (!isTouch) $('#hint').textContent = 'Drag to look. W A S D to walk, Shift to run.';
+
+function collide(){
+  const R = .3;
+  for (let it=0; it<2; it++){
+    for (const c of colliders){
+      if (player.x > c.x1-R && player.x < c.x2+R && player.z > c.z1-R && player.z < c.z2+R){
+        const dl = player.x-(c.x1-R), dr = (c.x2+R)-player.x, db = player.z-(c.z1-R), df = (c.z2+R)-player.z;
+        const m = Math.min(dl,dr,db,df);
+        if (m===dl) player.x = c.x1-R; else if (m===dr) player.x = c.x2+R; else if (m===db) player.z = c.z1-R; else player.z = c.z2+R;
+      }
+    }
+    for (const c of circles){ const dx = player.x-c.x, dz = player.z-c.z, d = Math.hypot(dx,dz), r = c.r+R;
+      if (d<r && d>1e-4){ player.x = c.x + dx/d*r; player.z = c.z + dz/d*r; } }
+  }
+  player.x = Math.max(-300, Math.min(300, player.x)); player.z = Math.max(-300, Math.min(300, player.z));
+}
+
+/* minimap */
+const mini = $('#mini'), mg = mini.getContext('2d');
+const MAP = {xmin:-50, xmax:100, zmin:-75, zmax:105};
+function drawMini(){
+  const W = mini.width, H = mini.height, sx = W/(MAP.zmax-MAP.zmin), sy = H/(MAP.xmax-MAP.xmin);
+  const P = (x,z)=>[(z-MAP.zmin)*sx, (MAP.xmax-x)*sy];
+  mg.clearRect(0,0,W,H); mg.fillStyle = 'rgba(216,176,122,.55)';
+  for (const c of colliders){ const [a,b] = P(c.x2, c.z1), [d,e] = P(c.x1, c.z2); mg.fillRect(a,b,Math.max(1,d-a),Math.max(1,e-b)); }
+  mg.fillStyle = '#E3A21A'; const [vx,vy] = P(0,-13.2); mg.beginPath(); mg.arc(vx,vy,4,0,7); mg.fill();
+  const [px,py] = P(player.x, player.z); const fx = -Math.sin(player.yaw), fz = -Math.cos(player.yaw);
+  const ang = Math.atan2(-fx, fz);
+  mg.save(); mg.translate(px,py); mg.rotate(ang); mg.fillStyle = '#ff4d5e'; mg.beginPath(); mg.moveTo(7,0); mg.lineTo(-5,-4.5); mg.lineTo(-5,4.5); mg.closePath(); mg.fill(); mg.restore();
+  mg.fillStyle = '#FBF6EA'; mg.font = '11px Hind, sans-serif'; mg.fillText('N ↑', 4, 12);
+}
+
+/* =====================================================================
+   MAIN LOOP
+   ===================================================================== */
+let waterMesh = null; const streetGlows = [];
+const clock = new THREE.Clock(); let elapsed = 0, skyTimer = 0, fpsAcc = 0, fpsN = 0;
+const whereN = $('#where .n'), whereT = $('#where .t'), chip = $('#chip'), chipBtn = $('#chipBtn');
+let lastZone = '';
+function frame(){
+  const dt = Math.min(clock.getDelta(), .05); elapsed += dt;
+  // time progression
+  if (timeMode==='live'){ skyTimer += dt; if (skyTimer>5){ const d = new Date(); hours = d.getHours()+d.getMinutes()/60+d.getSeconds()/3600; skyTimer = 0; } }
+  else if (timeMode==='fast') hours = (hours + dt/10) % 24;
+  // movement
+  let mx = 0, mz = 0;
+  if (keys.KeyW||keys.ArrowUp) mz += 1; if (keys.KeyS||keys.ArrowDown) mz -= 1;
+  if (keys.KeyD) mx += 1; if (keys.KeyA) mx -= 1;
+  if (keys.ArrowLeft) player.yaw += 1.8*dt; if (keys.ArrowRight) player.yaw -= 1.8*dt;
+  mx += joy.x; mz += -joy.y;
+  const mag = Math.min(1, Math.hypot(mx,mz));
+  const run = keys.ShiftLeft || keys.ShiftRight || Math.hypot(joy.x,joy.y) > .95;
+  const speed = (run ? 5.2 : 2.4) * mag;
+  if (mag > .05){
+    const a = Math.atan2(mx, mz), ang = player.yaw - a;
+    player.x += -Math.sin(ang)*speed*dt; player.z += -Math.cos(ang)*speed*dt;
+    player.bob += dt*speed*2.6;
+  }
+  collide();
+  const bob = Math.sin(player.bob)*.035*Math.min(1,speed/2);
+  camera.position.set(player.x, 1.62 + bob, player.z);
+  camera.rotation.set(player.pitch, player.yaw, 0);
+  // zone, indoor factor
+  let zone = ['Mada Streets', 'Tirumala', '', 0];
+  for (const Z of ZONES){ if (player.x>=Z[2] && player.x<=Z[3] && player.z>=Z[4] && player.z<=Z[5]){ zone = Z; break; } }
+  indoor += ((zone[6]||0) - indoor) * Math.min(1, dt*2.5);
+  if (zone[0] !== lastZone){ lastZone = zone[0]; whereN.textContent = zone[0]; whereT.textContent = zone[1]; }
+  // nearest hotspot
+  let best = null, bs = 1e9;
+  for (const s of SPOTS){ const d = Math.hypot(player.x-s.x, player.z-s.z)/s.r; if (d<1 && d<bs){ bs = d; best = s; } }
+  if (best !== nearSpot){ nearSpot = best; chip.style.display = best ? 'block' : 'none'; if (best) chipBtn.textContent = 'About: ' + best.name; }
+  // sky & lights
+  updateSky();
+  sun.position.set(player.x + sunDir.x*120, sunDir.y*120, player.z + sunDir.z*120); sun.target.position.set(player.x, 0, player.z);
+  if (sunDir.y < 0) sun.position.y = 1; moon.target.position.set(player.x,0,player.z); moon.position.add(V(player.x,0,player.z));
+  sky.position.copy(camera.position); stars.position.copy(camera.position);
+  // flames flicker
+  for (const f of flames){ const k = 1 + Math.sin(elapsed*13+f.ph)*.08 + Math.sin(elapsed*29+f.ph*3)*.05;
+    f.f.scale.set(f.s*(2-k), f.s*k, f.s*(2-k)); if (f.sp) f.sp.material.opacity = .75 + (k-1)*2; }
+  lampLights.forEach((l,i)=>{ l.intensity = l.userData.base * (1 + Math.sin(elapsed*9+i)*.05 + Math.sin(elapsed*23+i*2)*.04) * (1 + .4*(1-dayF)); });
+  // bells
+  if (bellSwing > .001){ bellSwing *= Math.pow(.25, dt); bells.forEach((b,i)=>b.rotation.x = Math.sin(elapsed*5+i)*.35*bellSwing); }
+  if (waterMesh) M.water.map.offset.set(elapsed*.006, elapsed*.004);
+  if (showMap) drawMini();
+  renderer.render(scene, camera);
+  fpsAcc += dt; fpsN++; if (fpsAcc>1){ $('#fps').textContent = Math.round(fpsN/fpsAcc)+' fps'; fpsAcc = 0; fpsN = 0; }
+  requestAnimationFrame(frame);
+}
+addEventListener('resize', ()=>{ camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
+
+/* ---------------- build & start ---------------- */
+setTimeout(()=>{
+  buildGround(); buildCompound(); buildSampangi(); buildVimanaPradakshinam(); buildSanctum(); buildPushkarini(); buildVaraha(); buildSurroundings();
+  buildPillars();
+  mergeStatic(world);
+  setShadowQuality(); updateSky();
+  renderer.compile(scene, camera);
+  const b = $('#enter'); b.disabled = false; b.textContent = 'Enter the temple';
+  b.onclick = ()=>{ $('#intro').style.display = 'none'; ringBell(); clock.getDelta(); requestAnimationFrame(frame);
+    if (isTouch && document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(()=>{}); };
+}, 60);
+</script>
+<noscript><p style="padding:2em">This walkthrough needs JavaScript and WebGL.</p></noscript>
+</body>
+</html>
